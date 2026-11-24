@@ -28,3 +28,9 @@ class Invalid(NaviError):
 
 class TooLarge(NaviError):
     status_code = 413
+
+
+class Upstream(NaviError):
+    """A site Navi fetched from (e.g. Linktree) failed or sent something unreadable."""
+
+    status_code = 502

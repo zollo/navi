@@ -46,7 +46,9 @@ npm test             # vitest
 
 **URLs** must start with `https://`, `http://` or `mailto:` (`schemas/page.py`), which blocks `javascript:`/`data:` links. Public links render with `rel="noopener noreferrer nofollow"`.
 
-**Icons** (`models/page.Icon`) are stored as VARCHAR (`models/base.str_enum`), so adding one needs no migration: add the enum value, the `IconName` type in `frontend/src/types`, and an entry in `frontend/src/lib/icons.tsx` (react-icons: Font Awesome 6 brands, Lucide for generic). `guessIcon` picks one from a pasted URL's host.
+**Icons** (`models/page.Icon`) are stored as VARCHAR (`models/base.str_enum`), so adding one needs no migration: add the enum value, the `IconName` type in `frontend/src/types`, and an entry in `frontend/src/lib/icons.tsx` (plus host rules in `backend/app/services/icons.py` if it has one) (react-icons: Font Awesome 6 brands, Lucide for generic). `guessIcon` picks one from a pasted URL's host.
+
+**Linktree import** (`services/linktree_service.py`): `POST /api/import/linktree` fetches a public `linktr.ee/<name>` page, reads its Next.js `__NEXT_DATA__` JSON (`pageProps.links` with `GROUP`/`HEADER` → sections, `socialLinks` → icons) and returns a draft page plus the avatar as a data: URL; nothing is saved until the editor does `PUT /api/pages/me` (+ avatar upload). It only ever fetches linktr.ee hosts (redirects re-checked), caps sizes, and maps link icons with `services/icons.guess_icon`, which mirrors the frontend's `guessIcon`. `LINKTREE_IMPORT_ENABLED` turns it off. Tests mock linktr.ee via `linktree_service.transport`.
 
 **Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached.
 

@@ -587,6 +587,53 @@
           }
         }
       }
+    },
+    "/api/import/linktree": {
+      "post": {
+        "tags": [
+          "import"
+        ],
+        "summary": "Import Linktree",
+        "description": "Read a public Linktree page and return it as a draft Navi page.\n\nNothing is saved. Load the draft into the editor, then save it with\n`PUT /api/pages/me` (and the avatar with `PUT /api/pages/me/avatar`).",
+        "operationId": "import_linktree",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinktreeImportIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageImport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -807,6 +854,26 @@
         ],
         "title": "LinkRead"
       },
+      "LinktreeImportIn": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "include_avatar": {
+            "type": "boolean",
+            "title": "Include Avatar",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "source"
+        ],
+        "title": "LinktreeImportIn"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -825,6 +892,64 @@
           "password"
         ],
         "title": "LoginRequest"
+      },
+      "PageImport": {
+        "properties": {
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/components/schemas/SocialLinkIn"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SectionIn"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "avatar_data_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Data Url"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_url",
+          "title",
+          "tagline",
+          "socials",
+          "sections"
+        ],
+        "title": "PageImport",
+        "description": "A draft page built from someone's Linktree. Nothing is saved: the editor loads\nit so the user can review it, then saves it with `PUT /api/pages/me`."
       },
       "PageIn": {
         "properties": {

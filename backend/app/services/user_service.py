@@ -9,7 +9,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import Conflict
+from app.config import settings
+from app.core.errors import Conflict, NotFound
 from app.core.security import decode_access_token, hash_password, verify_password
 from app.models.user import User
 
@@ -19,6 +20,25 @@ async def get_by_email(db: AsyncSession, email: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def _grant_configured_admin(db: AsyncSession, user: User) -> User:
+    """Make the user an admin if their email is in ADMIN_EMAILS."""
+    if not user.is_admin and user.email in settings.admin_email_set:
+        user.is_admin = True
+        await db.commit()
+        await db.refresh(user)
+    return user
+
+
+async def set_admin(db: AsyncSession, email: str, is_admin: bool) -> User:
+    user = await get_by_email(db, email)
+    if user is None:
+        raise NotFound(f"No account with email {email}")
+    user.is_admin = is_admin
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
 async def authenticate(db: AsyncSession, email: str, password: str) -> User | None:
     user = await get_by_email(db, email)
     if user is None or not user.is_active:
@@ -26,7 +46,7 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> User | No
     # bcrypt is deliberately slow: keep it off the event loop.
     if not await asyncio.to_thread(verify_password, password, user.hashed_password):
         return None
-    return user
+    return await _grant_configured_admin(db, user)
 
 
 async def create_user(
@@ -46,7 +66,7 @@ async def create_user(
         await db.rollback()
         raise Conflict("Email already registered") from None
     await db.refresh(user)
-    return user
+    return await _grant_configured_admin(db, user)
 
 
 async def update_user(
@@ -71,4 +91,4 @@ async def resolve_token(db: AsyncSession, token: str) -> User | None:
     user = await db.get(User, user_id)
     if user is None or not user.is_active:
         return None
-    return user
+    return await _grant_configured_admin(db, user)

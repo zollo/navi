@@ -3,12 +3,13 @@ from __future__ import annotations
 
 import enum
 import uuid
+from typing import Any
 
 from sqlalchemy import ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.db import Base
-from app.models.base import TimestampMixin, UUIDMixin, str_enum
+from app.models.base import JSONType, TimestampMixin, UUIDMixin, str_enum
 
 
 class Icon(enum.StrEnum):
@@ -61,6 +62,19 @@ class Page(UUIDMixin, TimestampMixin, Base):
     # Bumped on every avatar upload; the SPA appends it to the URL to bust caches.
     avatar_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    # Look of the page (colors, fonts, buttons, background), validated by
+    # schemas.theme.Theme. Null means the default look.
+    theme: Mapped[dict[str, Any] | None] = mapped_column(JSONType)
+    # The page's own background image, stored like the avatar.
+    background: Mapped[bytes | None] = deferred(mapped_column(LargeBinary))
+    background_content_type: Mapped[str | None] = mapped_column(String(64))
+    background_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # The curated background picked from the gallery, if any. Deleting it from
+    # the gallery clears this, and the page falls back to its background color.
+    background_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("backgrounds.id", ondelete="SET NULL"), index=True
+    )
+
     socials: Mapped[list["SocialLink"]] = relationship(
         back_populates="page",
         cascade="all, delete-orphan",
@@ -77,6 +91,10 @@ class Page(UUIDMixin, TimestampMixin, Base):
     @property
     def has_avatar(self) -> bool:
         return self.avatar_content_type is not None
+
+    @property
+    def has_background(self) -> bool:
+        return self.background_content_type is not None
 
 
 class SocialLink(UUIDMixin, Base):

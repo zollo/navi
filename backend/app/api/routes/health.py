@@ -9,7 +9,7 @@ from app.api.deps import get_current_user
 from app.config import settings
 from app.db import get_db
 from app.models.user import User
-from app.schemas.meta import BuildInfo
+from app.schemas.meta import BuildInfo, UploadLimits
 
 router = APIRouter(tags=["health"])
 
@@ -44,4 +44,12 @@ async def build_info(_: User = Depends(get_current_user)) -> BuildInfo:
         public_url=base,
         api_docs_url=f"{base}/docs",
         openapi_url=f"{base}/openapi.json",
+    )
+
+
+@router.get("/limits", response_model=UploadLimits, tags=["meta"], operation_id="upload_limits")
+async def upload_limits() -> UploadLimits:
+    """Upload size limits for avatars and background images."""
+    return UploadLimits(
+        max_avatar_kb=settings.max_avatar_kb, max_background_kb=settings.max_background_kb
     )

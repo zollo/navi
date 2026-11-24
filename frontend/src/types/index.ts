@@ -3,6 +3,7 @@ export interface User {
   email: string;
   display_name: string;
   is_active: boolean;
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -74,6 +75,43 @@ export interface Section {
   links: Link[];
 }
 
+// Keep these in sync with backend/app/schemas/theme.py.
+export type BackgroundKind = "default" | "solid" | "gradient" | "image" | "curated";
+export type FontName = "system" | "inter" | "nunito" | "lora" | "playfair" | "space-mono" | "caveat";
+export type ButtonStyle = "filled" | "outline" | "glass" | "shadow";
+export type ButtonShape = "square" | "rounded" | "pill";
+export type AvatarShape = "circle" | "rounded" | "square";
+
+export interface ThemeBackground {
+  kind: BackgroundKind;
+  color: string | null;
+  gradient_from: string | null;
+  gradient_to: string | null;
+  gradient_angle: number;
+  curated_id: string | null;
+  image_dark: boolean;
+}
+
+// The look of a page. Null colors are automatic.
+export interface PageTheme {
+  background: ThemeBackground;
+  font: FontName;
+  text_color: string | null;
+  button_style: ButtonStyle;
+  button_shape: ButtonShape;
+  button_color: string | null;
+  button_text_color: string | null;
+  avatar_shape: AvatarShape;
+}
+
+// A curated background from the gallery.
+export interface Background {
+  id: string;
+  name: string;
+  image_url: string;
+  dark: boolean;
+}
+
 // What GET /api/pages/{handle} returns.
 export interface Page {
   handle: string;
@@ -82,6 +120,11 @@ export interface Page {
   avatar_url: string | null;
   socials: SocialLink[];
   sections: Section[];
+  theme: PageTheme;
+  // The background image the page shows (its own or a gallery one), if any.
+  background_url: string | null;
+  // The page's own uploaded background image, shown when the kind is "image".
+  custom_background_url: string | null;
   updated_at: string;
 }
 
@@ -92,10 +135,16 @@ export interface PageInput {
   tagline: string;
   socials: SocialLink[];
   sections: Section[];
+  theme: PageTheme;
 }
 
 export interface HandleCheck {
   handle: string;
   available: boolean;
   reason: string | null;
+}
+
+export interface UploadLimits {
+  max_avatar_kb: number;
+  max_background_kb: number;
 }

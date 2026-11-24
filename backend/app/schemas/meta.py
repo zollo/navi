@@ -16,3 +16,10 @@ class BuildInfo(BaseModel):
 
 class IconList(BaseModel):
     icons: list[str]
+
+
+class UploadLimits(BaseModel):
+    """Upload size limits, so the SPA can shrink images before sending them."""
+
+    max_avatar_kb: int
+    max_background_kb: int

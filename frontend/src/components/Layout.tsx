@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
-import { LuPencil, LuUser } from "react-icons/lu";
+import { LuImages, LuPencil, LuUser } from "react-icons/lu";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 
-const TABS: { to: string; label: string; icon: ReactNode }[] = [
+const TABS: { to: string; label: string; icon: ReactNode; admin?: boolean }[] = [
   { to: "/edit", label: "My page", icon: <LuPencil aria-hidden /> },
+  { to: "/admin", label: "Backgrounds", icon: <LuImages aria-hidden />, admin: true },
   { to: "/account", label: "Account", icon: <LuUser aria-hidden /> },
 ];
 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const tabs = TABS.filter((t) => !t.admin || user?.is_admin);
 
   return (
     <>
@@ -22,7 +24,7 @@ export default function Layout() {
           Navi
         </NavLink>
         <div className="links">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <NavLink key={t.to} to={t.to}>
               {t.label}
             </NavLink>
@@ -43,7 +45,7 @@ export default function Layout() {
       </nav>
       <Outlet />
       <nav className="tabbar" aria-label="Main">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <NavLink key={t.to} to={t.to}>
             <span className="ico">{t.icon}</span>
             {t.label}

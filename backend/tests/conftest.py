@@ -14,6 +14,8 @@ os.environ["DATABASE_URL"] = os.environ.get(
 os.environ["DB_NULL_POOL"] = "true"
 os.environ["SECRET_KEY"] = "test-secret-key-that-is-long-enough-for-hs256"
 os.environ["MAX_AVATAR_KB"] = "4"
+os.environ["MAX_BACKGROUND_KB"] = "8"
+os.environ["ADMIN_EMAILS"] = "Admin@Example.com, other-admin@example.com"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -52,3 +54,8 @@ def alice(client) -> dict[str, str]:
 @pytest.fixture
 def bob(client) -> dict[str, str]:
     return register(client, "bob@example.com")
+
+
+@pytest.fixture
+def admin(client) -> dict[str, str]:
+    return register(client, "admin@example.com")

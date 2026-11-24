@@ -19,7 +19,7 @@ import type {
   PageTheme,
   Section,
   SocialLink,
-  UploadLimits,
+  PublicConfig,
 } from "../types";
 
 // Live availability check for a handle, debounced while typing.
@@ -136,7 +136,7 @@ export default function Editor() {
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [gallery, setGallery] = useState<Background[]>([]);
-  const [limits, setLimits] = useState<UploadLimits | null>(null);
+  const [limits, setLimits] = useState<PublicConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -154,7 +154,7 @@ export default function Editor() {
 
   useEffect(() => {
     api.get<{ backgrounds: Background[] }>("/api/backgrounds").then((r) => setGallery(r.backgrounds)).catch(() => {});
-    api.get<UploadLimits>("/api/limits").then(setLimits).catch(() => {});
+    api.get<PublicConfig>("/api/config").then(setLimits).catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -144,7 +144,9 @@ export interface HandleCheck {
   reason: string | null;
 }
 
-export interface UploadLimits {
+// What GET /api/config returns.
+export interface PublicConfig {
   max_avatar_kb: number;
+  avatar_types: string[];
   max_background_kb: number;
 }

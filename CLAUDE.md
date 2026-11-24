@@ -52,7 +52,7 @@ npm test             # vitest
 
 **Admins:** `users.is_admin`, granted on sign-in to emails in `ADMIN_EMAILS` or by `python -m app.manage admin <email> [--revoke]`. Only admins can write `/api/admin/*` (the curated gallery, `get_admin_user`); the SPA shows them a Backgrounds tab at `/admin`.
 
-**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. A page's own background image works the same way (`pages.background`, `MAX_BACKGROUND_KB`, `PUT /api/pages/me/background`); it shows once the page is saved with background kind `image`. `core/images.check_image` validates every upload. The SPA shrinks images to fit before uploading (`lib/image.ts`, limits from `GET /api/limits`).
+**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. A page's own background image works the same way (`pages.background`, `MAX_BACKGROUND_KB`, `PUT /api/pages/me/background`); it shows once the page is saved with background kind `image`. `core/images.check_image` validates every upload. The SPA shrinks images to fit before uploading (`lib/image.ts`, limits from `GET /api/config`).
 
 **Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
 

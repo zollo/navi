@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { fitImage, imageIsDark } from "../lib/image";
-import type { Background, UploadLimits } from "../types";
+import type { Background, PublicConfig } from "../types";
 
 function message(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
@@ -14,7 +14,7 @@ function message(err: unknown, fallback: string): string {
 export default function AdminBackgrounds() {
   const { user } = useAuth();
   const [items, setItems] = useState<Background[] | null>(null);
-  const [limits, setLimits] = useState<UploadLimits | null>(null);
+  const [limits, setLimits] = useState<PublicConfig | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -27,7 +27,7 @@ export default function AdminBackgrounds() {
       .get<{ backgrounds: Background[] }>("/api/backgrounds")
       .then((r) => setItems(r.backgrounds))
       .catch((err) => setError(message(err, "Couldn't load the gallery")));
-    api.get<UploadLimits>("/api/limits").then(setLimits).catch(() => {});
+    api.get<PublicConfig>("/api/config").then(setLimits).catch(() => {});
   }, []);
 
   if (user && !user.is_admin) return <Navigate to="/edit" replace />;

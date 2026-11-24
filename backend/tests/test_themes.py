@@ -130,5 +130,7 @@ def test_stored_theme_from_another_version_falls_back(client, alice):
     assert page.json()["theme"]["font"] == "system"
 
 
-def test_upload_limits(client):
-    assert client.get("/api/limits").json() == {"max_avatar_kb": 4, "max_background_kb": 8}
+def test_public_config(client):
+    config = client.get("/api/config").json()
+    assert config["max_avatar_kb"] == 4
+    assert config["max_background_kb"] == 8

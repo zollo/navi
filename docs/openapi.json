@@ -82,22 +82,22 @@
         ]
       }
     },
-    "/api/limits": {
+    "/api/config": {
       "get": {
         "tags": [
           "health",
           "meta"
         ],
-        "summary": "Upload Limits",
-        "description": "Upload size limits for avatars and background images.",
-        "operationId": "upload_limits",
+        "summary": "Public Config",
+        "description": "Upload limits for clients, such as the largest avatar the API accepts. Public.",
+        "operationId": "public_config",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UploadLimits"
+                  "$ref": "#/components/schemas/PublicConfig"
                 }
               }
             }
@@ -1466,6 +1466,33 @@
         "title": "PageRead",
         "description": "A page as anyone sees it at /<handle>."
       },
+      "PublicConfig": {
+        "properties": {
+          "max_avatar_kb": {
+            "type": "integer",
+            "title": "Max Avatar Kb"
+          },
+          "avatar_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Avatar Types"
+          },
+          "max_background_kb": {
+            "type": "integer",
+            "title": "Max Background Kb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "max_avatar_kb",
+          "avatar_types",
+          "max_background_kb"
+        ],
+        "title": "PublicConfig",
+        "description": "Limits the SPA needs before it talks to the API (no auth)."
+      },
       "RegisterRequest": {
         "properties": {
           "email": {
@@ -1722,25 +1749,6 @@
           "user"
         ],
         "title": "Token"
-      },
-      "UploadLimits": {
-        "properties": {
-          "max_avatar_kb": {
-            "type": "integer",
-            "title": "Max Avatar Kb"
-          },
-          "max_background_kb": {
-            "type": "integer",
-            "title": "Max Background Kb"
-          }
-        },
-        "type": "object",
-        "required": [
-          "max_avatar_kb",
-          "max_background_kb"
-        ],
-        "title": "UploadLimits",
-        "description": "Upload size limits, so the SPA can shrink images before sending them."
       },
       "UserRead": {
         "properties": {

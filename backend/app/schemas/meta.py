@@ -18,8 +18,10 @@ class IconList(BaseModel):
     icons: list[str]
 
 
-class UploadLimits(BaseModel):
-    """Upload size limits, so the SPA can shrink images before sending them."""
+class PublicConfig(BaseModel):
+    """Limits the SPA needs before it talks to the API (no auth)."""
 
     max_avatar_kb: int
+    avatar_types: list[str]
+    # Largest page or gallery background image the API accepts.
     max_background_kb: int

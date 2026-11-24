@@ -48,7 +48,7 @@ npm test             # vitest
 
 **Icons** (`models/page.Icon`) are stored as VARCHAR (`models/base.str_enum`), so adding one needs no migration: add the enum value, the `IconName` type in `frontend/src/types`, and an entry in `frontend/src/lib/icons.tsx` (react-icons: Font Awesome 6 brands, Lucide for generic). `guessIcon` picks one from a pasted URL's host.
 
-**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached.
+**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. The editor never uploads the picked file directly: `components/AvatarEditor.tsx` (crop/zoom/rotate/flip on a canvas) re-encodes it as a ≤512px square WebP (JPEG where the browser can't encode WebP), stepping quality then size down (`lib/avatar.ts`) until it fits under `max_avatar_kb` from the public `GET /api/config`. So any image the browser can decode works (HEIC on Safari, AVIF), and animated GIFs become stills.
 
 **Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
 

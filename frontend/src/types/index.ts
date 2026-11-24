@@ -99,3 +99,9 @@ export interface HandleCheck {
   available: boolean;
   reason: string | null;
 }
+
+// What GET /api/config returns.
+export interface PublicConfig {
+  max_avatar_kb: number;
+  avatar_types: string[];
+}

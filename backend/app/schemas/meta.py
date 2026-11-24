@@ -16,3 +16,10 @@ class BuildInfo(BaseModel):
 
 class IconList(BaseModel):
     icons: list[str]
+
+
+class PublicConfig(BaseModel):
+    """Limits the SPA needs before it talks to the API (no auth)."""
+
+    max_avatar_kb: int
+    avatar_types: list[str]

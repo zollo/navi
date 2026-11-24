@@ -1,0 +1,54 @@
+"""Liveness/readiness endpoints and build info."""
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Response
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_current_user
+from app.config import settings
+from app.db import get_db
+from app.models.user import User
+from app.schemas.meta import BuildInfo, PublicConfig
+from app.services.page_service import AVATAR_TYPES
+
+router = APIRouter(tags=["health"])
+
+
+@router.get("/health", operation_id="health")
+async def health() -> dict:
+    """Liveness — always cheap, no dependencies."""
+    return {"status": "ok", "env": settings.env}
+
+
+@router.get("/health/ready", operation_id="readiness")
+async def readiness(response: Response, db: AsyncSession = Depends(get_db)) -> dict:
+    """Readiness — checks the database; 503 when it is unreachable."""
+    db_ok = True
+    try:
+        await db.execute(text("SELECT 1"))
+    except Exception:
+        db_ok = False
+        response.status_code = 503
+    return {"database": db_ok}
+
+
+@router.get("/build-info", response_model=BuildInfo, tags=["meta"], operation_id="build_info")
+async def build_info(_: User = Depends(get_current_user)) -> BuildInfo:
+    """Current build plus the URLs integrations need. Requires authentication."""
+    base = settings.public_url.rstrip("/")
+    return BuildInfo(
+        version=settings.app_version,
+        git_commit=settings.git_commit,
+        build_time=settings.build_time,
+        environment=settings.env,
+        public_url=base,
+        api_docs_url=f"{base}/docs",
+        openapi_url=f"{base}/openapi.json",
+    )
+
+
+@router.get("/config", response_model=PublicConfig, tags=["meta"], operation_id="public_config")
+async def public_config() -> PublicConfig:
+    """Upload limits for clients, such as the largest avatar the API accepts. Public."""
+    return PublicConfig(max_avatar_kb=settings.max_avatar_kb, avatar_types=sorted(AVATAR_TYPES))

@@ -117,6 +117,15 @@ def test_avatar(client, alice):
     assert client.get(url).status_code == 404
 
 
+def test_public_config(client):
+    resp = client.get("/api/config")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["max_avatar_kb"] == 4
+    assert "image/webp" in body["avatar_types"]
+    assert "image/svg+xml" not in body["avatar_types"]
+
+
 def test_delete_page(client, alice):
     client.put("/api/pages/me", headers=alice, json=PAGE)
     assert client.delete("/api/pages/me", headers=alice).status_code == 204

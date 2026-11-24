@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { LuExternalLink, LuPlus } from "react-icons/lu";
 import { Link as RouterLink } from "react-router-dom";
 import { api, ApiError } from "../api/client";
+import AvatarEditor from "../components/AvatarEditor";
 import IconSelect from "../components/IconSelect";
 import PageView from "../components/PageView";
 import RowActions from "../components/RowActions";
+import { DEFAULT_MAX_AVATAR_KB, loadImage } from "../lib/avatar";
 import { guessIcon } from "../lib/icons";
 import { blankPage, handleProblem, isSafeUrl, move, normalizeHandle, toInput } from "../lib/page";
-import type { HandleCheck, Link, Page, PageInput, Section, SocialLink } from "../types";
+import type { HandleCheck, Link, Page, PageInput, PublicConfig, Section, SocialLink } from "../types";
 
 // Live availability check for a handle, debounced while typing.
 function useHandleCheck(handle: string, current: string | null) {
@@ -125,6 +127,9 @@ export default function Editor() {
   const [busy, setBusy] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [maxAvatarKb, setMaxAvatarKb] = useState(DEFAULT_MAX_AVATAR_KB);
+  const [editing, setEditing] = useState<{ image: HTMLImageElement; animated: boolean } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const check = useHandleCheck(draft?.handle ?? "", loaded?.handle ?? null);
 
   const adopt = useCallback((p: Page) => {
@@ -143,6 +148,13 @@ export default function Editor() {
         else setError(err instanceof ApiError ? err.message : "Couldn't load your page");
       });
   }, [adopt]);
+
+  useEffect(() => {
+    api
+      .get<PublicConfig>("/api/config")
+      .then((c) => setMaxAvatarKb(c.max_avatar_kb))
+      .catch(() => {});
+  }, []);
 
   if (missing) return <Claim onCreated={adopt} />;
   if (!draft || !loaded) {
@@ -178,13 +190,39 @@ export default function Editor() {
     }
   };
 
-  const uploadAvatar = async (file: File) => {
+  // Any image the browser can decode (HEIC on Safari, AVIF, BMP…) opens in the
+  // editor; what's uploaded is always the re-encoded result.
+  const openEditor = async (src: Blob) => {
     setError(null);
+    if (src.type && !src.type.startsWith("image/")) {
+      setError("Choose an image file");
+      return;
+    }
+    try {
+      setEditing({ image: await loadImage(src), animated: src.type === "image/gif" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't open that image");
+    }
+  };
+
+  const editCurrent = async () => {
+    if (!avatarUrl) return;
+    try {
+      const resp = await fetch(api.baseUrl + avatarUrl);
+      if (!resp.ok) throw new Error();
+      await openEditor(await resp.blob());
+    } catch {
+      setError("Couldn't load your current photo");
+    }
+  };
+
+  const uploadAvatar = async (file: File) => {
     try {
       const p = await api.upload<Page>("/api/pages/me/avatar", file);
       setAvatarUrl(p.avatar_url);
+      setEditing(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn't upload the image");
+      throw new Error(err instanceof ApiError ? err.message : "Couldn't upload the photo");
     }
   };
 
@@ -227,7 +265,21 @@ export default function Editor() {
 
           <div className="card">
             <h2>Profile</h2>
-            <div className="avatar-row">
+            <div
+              className={`avatar-row ${dragging ? "dragging" : ""}`}
+              onDragOver={(e) => {
+                if (!e.dataTransfer.types.includes("Files")) return;
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                const f = e.dataTransfer.files[0];
+                if (f) void openEditor(f);
+              }}
+            >
               {avatarUrl ? (
                 <img className="navi-avatar small" src={api.baseUrl + avatarUrl} alt="Your avatar" />
               ) : (
@@ -235,24 +287,32 @@ export default function Editor() {
                   ?
                 </div>
               )}
-              <div className="row">
-                <button type="button" className="btn secondary small" onClick={() => fileRef.current?.click()}>
-                  {avatarUrl ? "Change photo" : "Add photo"}
-                </button>
-                {avatarUrl && (
-                  <button type="button" className="btn ghost small" onClick={removeAvatar}>
-                    Remove
+              <div className="avatar-actions">
+                <div className="row">
+                  <button type="button" className="btn secondary small" onClick={() => fileRef.current?.click()}>
+                    {avatarUrl ? "Change" : "Add photo"}
                   </button>
-                )}
+                  {avatarUrl && (
+                    <>
+                      <button type="button" className="btn ghost small" onClick={editCurrent}>
+                        Edit
+                      </button>
+                      <button type="button" className="btn ghost small" onClick={removeAvatar}>
+                        Remove
+                      </button>
+                    </>
+                  )}
+                </div>
+                <span className="help">Or drop an image here. You can crop it before it's saved.</span>
               </div>
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
+                accept="image/*"
                 hidden
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) void uploadAvatar(f);
+                  if (f) void openEditor(f);
                   e.target.value = "";
                 }}
               />
@@ -441,6 +501,16 @@ export default function Editor() {
           </div>
         </aside>
       </div>
+
+      {editing && (
+        <AvatarEditor
+          image={editing.image}
+          animated={editing.animated}
+          maxBytes={maxAvatarKb * 1024}
+          onCancel={() => setEditing(null)}
+          onSave={uploadAvatar}
+        />
+      )}
     </div>
   );
 }

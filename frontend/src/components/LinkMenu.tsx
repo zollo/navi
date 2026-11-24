@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { LuCopy, LuEllipsisVertical, LuExternalLink, LuShare } from "react-icons/lu";
+import { canShare, copyText } from "../lib/page";
 
 // The kebab menu on a link card: open, copy or share that one link.
 export default function LinkMenu({ title, url }: { title: string; url: string }) {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"yes" | "failed" | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -14,6 +15,7 @@ export default function LinkMenu({ title, url }: { title: string; url: string })
         setOpen(false);
       }
     };
+    setCopied(null);
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", close);
     return () => {
@@ -23,15 +25,15 @@ export default function LinkMenu({ title, url }: { title: string; url: string })
   }, [open]);
 
   const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
+    if (await copyText(url)) {
+      setCopied("yes");
       setTimeout(() => {
-        setCopied(false);
+        setCopied(null);
         setOpen(false);
       }, 900);
-    } catch {
-      setOpen(false);
+    } else {
+      // Leave the menu open with the URL shown so it can be copied by hand.
+      setCopied("failed");
     }
   };
 
@@ -65,9 +67,10 @@ export default function LinkMenu({ title, url }: { title: string; url: string })
             <LuExternalLink aria-hidden /> Open in new tab
           </a>
           <button type="button" role="menuitem" onClick={copy}>
-            <LuCopy aria-hidden /> {copied ? "Copied!" : "Copy link"}
+            <LuCopy aria-hidden /> {copied === "yes" ? "Copied!" : "Copy link"}
           </button>
-          {typeof navigator.share === "function" && (
+          {copied === "failed" && <div className="menu-url">{url}</div>}
+          {canShare() && (
             <button type="button" role="menuitem" onClick={share}>
               <LuShare aria-hidden /> Share
             </button>

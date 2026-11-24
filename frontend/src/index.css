@@ -366,6 +366,19 @@ input:focus, select:focus, textarea:focus {
   font-size: 14px;
   font-weight: 600;
 }
+.navi-toast.select, .link-menu .menu-url {
+  user-select: all;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.navi-toast.select { border-radius: 12px; max-width: 90%; }
+.link-menu .menu-url {
+  margin: 4px 6px 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--hover);
+  font-size: 13px;
+}
 .navi-head { text-align: center; margin: 12px 0 28px; }
 .navi-avatar {
   width: 96px;
@@ -469,7 +482,16 @@ input:focus, select:focus, textarea:focus {
 .page.wide { max-width: 1180px; }
 .editor { display: grid; gap: 24px; grid-template-columns: 1fr; }
 .editor .card + .card { margin-top: 0; }
-.editor-form { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.editor-form { min-width: 0; }
+.editor-form > fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 .editor-preview { display: none; }
 .editor.show-preview .editor-form { display: none; }
 .editor.show-preview .editor-preview { display: block; }

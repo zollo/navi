@@ -3,7 +3,7 @@ import { LuShare } from "react-icons/lu";
 import { Link as RouterLink } from "react-router-dom";
 import { api } from "../api/client";
 import { ICONS, NaviIcon } from "../lib/icons";
-import { pageUrl } from "../lib/page";
+import { canShare, copyText, pageUrl } from "../lib/page";
 import type { PageInput } from "../types";
 import LinkMenu from "./LinkMenu";
 import Logo from "./Logo";
@@ -23,7 +23,8 @@ function initials(page: PageInput): string {
 // A Navi page: logo and share button, avatar, handle, tagline, social icons and
 // sectioned link cards. Used by the public page and the editor preview.
 export default function PageView({ page, avatarUrl, preview = false }: Props) {
-  const [shared, setShared] = useState(false);
+  // After a copy attempt: "copied", or the URL to select by hand if copying failed.
+  const [toast, setToast] = useState<string | null>(null);
   const url = pageUrl(page.handle);
   const title = page.title || `@${page.handle}`;
   const linkProps = preview
@@ -31,7 +32,7 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
     : { target: "_blank", rel: "noopener noreferrer nofollow" };
 
   const share = async () => {
-    if (typeof navigator.share === "function") {
+    if (canShare()) {
       try {
         await navigator.share({ title, url });
       } catch {
@@ -39,19 +40,22 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
       }
       return;
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      setShared(true);
-      setTimeout(() => setShared(false), 1500);
-    } catch {
-      /* clipboard unavailable */
-    }
+    const copied = await copyText(url);
+    setToast(copied ? "Link copied" : url);
+    setTimeout(() => setToast(null), copied ? 1500 : 6000);
   };
 
   return (
     <div className="navi-page">
       <div className="navi-top">
-        <RouterLink to="/" className="navi-chip" aria-label="Navi home" tabIndex={preview ? -1 : 0}>
+        <RouterLink
+          to="/"
+          className="navi-chip"
+          aria-label="Navi home"
+          tabIndex={preview ? -1 : 0}
+          // In the editor preview, leaving would throw away unsaved edits.
+          onClick={preview ? (e: MouseEvent) => e.preventDefault() : undefined}
+        >
           <Logo size={22} />
         </RouterLink>
         <button
@@ -59,13 +63,17 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
           className="navi-chip"
           onClick={share}
           aria-label="Share this page"
-          title={shared ? "Link copied" : "Share this page"}
+          title="Share this page"
           disabled={preview}
         >
           <LuShare size={18} aria-hidden />
         </button>
       </div>
-      {shared && <div className="navi-toast" role="status">Link copied</div>}
+      {toast && (
+        <div className={`navi-toast ${toast === "Link copied" ? "" : "select"}`} role="status">
+          {toast}
+        </div>
+      )}
 
       <header className="navi-head">
         {avatarUrl ? (

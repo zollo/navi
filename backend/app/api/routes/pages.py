@@ -26,7 +26,12 @@ async def get_my_page(
     return await page_service.my_page(db, user)
 
 
-@router.put("/me", response_model=PageRead, operation_id="save_my_page")
+@router.put(
+    "/me",
+    response_model=PageRead,
+    operation_id="save_my_page",
+    responses={201: {"model": PageRead, "description": "Page created"}},
+)
 async def save_my_page(
     payload: PageIn,
     response: Response,

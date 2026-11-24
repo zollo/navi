@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, getToken, setToken } from "../api/client";
+import { api, ApiError, getToken, setToken } from "../api/client";
 import type { Token, User } from "../types";
 
 interface AuthState {
@@ -32,8 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       setUser(await api.get<User>("/api/auth/me"));
-    } catch {
-      setToken(null);
+    } catch (err) {
+      // Only a rejected token ends the session. A network error or 5xx (say, the
+      // backend restarting) keeps it, so a reload signs the user back in.
+      if (err instanceof ApiError && err.status === 401) setToken(null);
       setUser(null);
     } finally {
       setLoading(false);

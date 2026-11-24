@@ -19,6 +19,8 @@ describe("handles", () => {
     }
     expect(handleProblem("login")).toMatch(/reserved/);
     expect(handleProblem("Edit")).toMatch(/reserved/);
+    expect(handleProblem("icons")).toMatch(/reserved/);
+    expect(handleProblem("handles")).toMatch(/reserved/);
   });
 });
 

@@ -18,13 +18,15 @@ from app.schemas.page import HandleCheck, PageIn, PageRead
 # letter or digit, e.g. "the.saasy.engineer".
 HANDLE_RE = re.compile(r"^[a-z0-9](?:[a-z0-9._-]{1,28})[a-z0-9]$")
 
-# Handles that would shadow a route of the SPA, the API or nginx, or that could be
-# mistaken for the service itself. Pages live at /<handle>, so keep this in sync
-# with frontend/src/App.tsx and frontend/nginx.conf.
+# Handles that would shadow a route of the SPA, nginx or the fixed /api/pages/*
+# routes (icons, handles, me), or that could be mistaken for the service itself.
+# Pages live at /<handle>, so keep this in sync with frontend/src/App.tsx,
+# frontend/nginx.conf and frontend/src/lib/page.ts.
 RESERVED_HANDLES = frozenset(
     {
         "about", "account", "admin", "api", "app", "assets", "auth", "dashboard",
-        "docs", "edit", "editor", "favicon.svg", "help", "home", "index.html",
+        "docs", "edit", "editor", "favicon.svg", "handles", "help", "home", "icons",
+        "index.html",
         "login", "logout", "me", "navi", "new", "openapi.json", "privacy", "redoc",
         "register", "root", "settings", "signin", "signup", "static", "support",
         "terms", "www",
@@ -56,8 +58,13 @@ async def get_by_handle(db: AsyncSession, handle: str) -> Page | None:
     return result.scalar_one_or_none()
 
 
-async def get_for_user(db: AsyncSession, user: User) -> Page | None:
-    result = await db.execute(select(Page).where(Page.user_id == user.id))
+async def get_for_user(db: AsyncSession, user: User, *, lock: bool = False) -> Page | None:
+    stmt = select(Page).where(Page.user_id == user.id)
+    if lock:
+        # Row lock (Postgres) so concurrent saves of one page run one at a time and
+        # each sees the other's children; populate_existing reloads them after it.
+        stmt = stmt.with_for_update().execution_options(populate_existing=True)
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
@@ -72,8 +79,12 @@ async def check_handle(db: AsyncSession, handle: str, user: User | None = None) 
 
 
 def to_read(page: Page) -> PageRead:
+    # The page id is in the cache key too: a freed handle can be claimed by
+    # another page whose avatar_version restarts at 1.
     avatar_url = (
-        f"/api/pages/{page.handle}/avatar?v={page.avatar_version}" if page.has_avatar else None
+        f"/api/pages/{page.handle}/avatar?v={page.id.hex[:12]}-{page.avatar_version}"
+        if page.has_avatar
+        else None
     )
     return PageRead(
         handle=page.handle,
@@ -102,13 +113,14 @@ async def my_page(db: AsyncSession, user: User) -> PageRead:
 
 async def save_page(db: AsyncSession, user: User, data: PageIn) -> tuple[PageRead, bool]:
     """Create the caller's page or replace its contents. Returns (page, created)."""
+    # Lock first, before anything loads the page's children.
+    page = await get_for_user(db, user, lock=True)
     check = await check_handle(db, data.handle, user)
     if not check.available:
         if check.reason == HANDLE_TAKEN:
             raise Conflict(HANDLE_TAKEN)
         raise Invalid(check.reason or "Invalid handle")
 
-    page = await get_for_user(db, user)
     created = page is None
     if page is None:
         page = Page(user_id=user.id)
@@ -136,9 +148,12 @@ async def save_page(db: AsyncSession, user: User, data: PageIn) -> tuple[PageRea
     ]
     try:
         await db.commit()
-    except IntegrityError:  # someone claimed the handle between the check and the commit
+    except IntegrityError:
+        # Someone claimed the handle between the check and the commit, or a
+        # concurrent request created this user's page first.
         await db.rollback()
-        raise Conflict(HANDLE_TAKEN) from None
+        raise Conflict(f"{HANDLE_TAKEN}, or your page was just saved elsewhere. "
+                       "Reload and try again.") from None
     # Timestamps are server-side; the children are already in memory, in order.
     await db.refresh(page, attribute_names=["created_at", "updated_at"])
     return to_read(page), created

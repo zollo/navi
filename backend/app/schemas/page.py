@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models.page import Icon
 
@@ -42,7 +42,8 @@ class SocialLinkRead(SocialLinkIn):
 
 
 class LinkIn(BaseModel):
-    title: str = Field(min_length=1, max_length=120)
+    # Stripped before the length check, so "   " is rejected rather than saved empty.
+    title: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
     url: Url
     icon: Icon = Icon.link
 

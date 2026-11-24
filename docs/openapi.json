@@ -314,6 +314,16 @@
               }
             }
           },
+          "201": {
+            "description": "Page created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRead"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {

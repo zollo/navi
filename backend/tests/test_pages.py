@@ -74,7 +74,7 @@ def test_one_page_per_user_and_unique_handles(client, alice, bob):
 
 
 def test_handle_validation(client, alice):
-    for bad in ("ab", "login", "-abc", "has space", "a..b", "x" * 31):
+    for bad in ("ab", "login", "icons", "handles", "-abc", "has space", "a..b", "x" * 31):
         resp = client.put("/api/pages/me", headers=alice, json={**PAGE, "handle": bad})
         assert resp.status_code == 422, bad
 
@@ -84,6 +84,9 @@ def test_rejects_unsafe_urls(client, alice):
     bad = {**PAGE, "sections": [{"title": "", "links": [link]}]}
     assert client.put("/api/pages/me", headers=alice, json=bad).status_code == 422
     bad = {**PAGE, "socials": [{"icon": "github", "url": "data:text/html,hi"}]}
+    assert client.put("/api/pages/me", headers=alice, json=bad).status_code == 422
+    blank = {"title": "   ", "url": "https://example.com"}
+    bad = {**PAGE, "sections": [{"title": "", "links": [blank]}]}
     assert client.put("/api/pages/me", headers=alice, json=bad).status_code == 422
     bad = {**PAGE, "socials": [{"icon": "not-an-icon", "url": "https://example.com"}]}
     assert client.put("/api/pages/me", headers=alice, json=bad).status_code == 422
@@ -98,6 +101,7 @@ def test_avatar(client, alice):
     assert resp.status_code == 200, resp.text
     url = resp.json()["avatar_url"]
     assert url.startswith("/api/pages/the.saasy.engineer/avatar?v=")
+    assert url.endswith("-1")
 
     img = client.get(url)
     assert img.status_code == 200

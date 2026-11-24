@@ -21,13 +21,20 @@ function useHandleCheck(handle: string, current: string | null) {
       setCheck({ handle: h, available: false, reason: local });
       return;
     }
+    // Ignore a response that arrives after the handle has changed again.
+    let live = true;
     const t = setTimeout(() => {
       api
         .get<HandleCheck>(`/api/pages/handles/${encodeURIComponent(h)}`)
-        .then(setCheck)
+        .then((c) => {
+          if (live) setCheck(c);
+        })
         .catch(() => {});
     }, 300);
-    return () => clearTimeout(t);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
   }, [handle, current]);
   return check;
 }
@@ -213,6 +220,8 @@ export default function Editor() {
 
       <div className={`editor ${showPreview ? "show-preview" : ""}`}>
         <form className="editor-form" onSubmit={save}>
+          {/* Disabled while saving, so no edit is lost when the saved page comes back. */}
+          <fieldset disabled={busy}>
           {error && <div className="alert error prewrap">{error}</div>}
           {notice && !dirty && <div className="alert success">{notice}</div>}
 
@@ -423,6 +432,7 @@ export default function Editor() {
               </button>
             )}
           </div>
+          </fieldset>
         </form>
 
         <aside className="editor-preview" aria-label="Preview">

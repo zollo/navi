@@ -133,6 +133,8 @@ jobs:
           curl -fsS http://localhost:8080/openapi.json | jq -e '.info.title == "Navi"'
           # Any unknown path is a /<handle> page served by the SPA.
           curl -fsS http://localhost:8080/some.handle | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/docsfan | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/docs | grep -qi 'swagger'
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/pages/nobody)
           test "$code" = "404"
       - name: Dump logs on failure
@@ -190,13 +192,24 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a v1.0.0 -m "Release v1.0.0"
           git push origin v1.0.0
+      # v6's Angular analyzer ignores the `!` marker (`feat!: ...`), so such a
+      # commit matches no rule and falls back to default_bump: make that major.
+      - name: Detect breaking-change marker
+        id: bang
+        if: steps.check.outputs.seed == 'false'
+        run: |
+          if git log -1 --format=%s | grep -Eq '^[a-z]+(\([^)]*\))?!:'; then
+            echo "default_bump=major" >> "$GITHUB_OUTPUT"
+          else
+            echo "default_bump=patch" >> "$GITHUB_OUTPUT"
+          fi
       - name: Determine next version
         id: tag
         if: steps.check.outputs.seed == 'false'
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: patch
+          default_bump: ${{ steps.bang.outputs.default_bump }}
       - name: Resolve version outputs
         id: final
         run: |

@@ -4,7 +4,8 @@ import type { Page, PageInput } from "../types";
 const HANDLE_RE = /^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/;
 const RESERVED = new Set([
   "about", "account", "admin", "api", "app", "assets", "auth", "dashboard",
-  "docs", "edit", "editor", "favicon.svg", "help", "home", "index.html",
+  "docs", "edit", "editor", "favicon.svg", "handles", "help", "home", "icons",
+  "index.html",
   "login", "logout", "me", "navi", "new", "openapi.json", "privacy", "redoc",
   "register", "root", "settings", "signin", "signup", "static", "support",
   "terms", "www",
@@ -56,6 +57,39 @@ export function blankPage(handle = ""): PageInput {
 // The absolute, shareable URL of a page.
 export function pageUrl(handle: string): string {
   return `${window.location.origin}/${handle}`;
+}
+
+// Copy text to the clipboard. The Clipboard API only exists on secure origins
+// (https or localhost), so fall back to a hidden textarea + execCommand for a
+// plain-http deployment such as http://<truenas-ip>:30083.
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    /* fall through */
+  }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  ta.remove();
+  return ok;
+}
+
+export function canShare(): boolean {
+  return typeof navigator.share === "function" && window.isSecureContext;
 }
 
 // Move item i of a list by delta (-1 up, +1 down); returns a new list.

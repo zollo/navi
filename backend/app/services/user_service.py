@@ -1,10 +1,12 @@
 """User lookups, authentication and account changes."""
 from __future__ import annotations
 
+import asyncio
 import uuid
 
 import jwt
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Conflict
@@ -21,7 +23,8 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> User | No
     user = await get_by_email(db, email)
     if user is None or not user.is_active:
         return None
-    if not verify_password(password, user.hashed_password):
+    # bcrypt is deliberately slow: keep it off the event loop.
+    if not await asyncio.to_thread(verify_password, password, user.hashed_password):
         return None
     return user
 
@@ -34,10 +37,14 @@ async def create_user(
     user = User(
         email=email.lower(),
         display_name=display_name or email.split("@")[0],
-        hashed_password=hash_password(password),
+        hashed_password=await asyncio.to_thread(hash_password, password),
     )
     db.add(user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:  # a concurrent sign-up with the same email won
+        await db.rollback()
+        raise Conflict("Email already registered") from None
     await db.refresh(user)
     return user
 
@@ -48,7 +55,7 @@ async def update_user(
     if display_name is not None:
         user.display_name = display_name
     if password is not None:
-        user.hashed_password = hash_password(password)
+        user.hashed_password = await asyncio.to_thread(hash_password, password)
     await db.commit()
     await db.refresh(user)
     return user

@@ -5,6 +5,7 @@ from functools import lru_cache
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import URL
 
 # Placeholder signing keys shipped in examples; refused in production.
 _PLACEHOLDER_SECRETS = {
@@ -61,10 +62,15 @@ class Settings(BaseSettings):
         """Async SQLAlchemy URL used by the app."""
         if self.database_url_override:
             return self.database_url_override
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        # URL.create escapes credentials, so passwords may contain @, : or /.
+        return URL.create(
+            "postgresql+asyncpg",
+            username=self.postgres_user,
+            password=self.postgres_password,
+            host=self.postgres_host,
+            port=self.postgres_port,
+            database=self.postgres_db,
+        ).render_as_string(hide_password=False)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

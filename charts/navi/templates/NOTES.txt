@@ -1,0 +1,13 @@
+Navi {{ include "navi.tag" . }} is deployed.
+{{- if .Values.ingress.enabled }}
+{{- range .Values.ingress.hosts }}
+  https://{{ . }}
+{{- end }}
+{{- else }}
+
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "navi.fullname" . }}-frontend 8080:{{ .Values.service.frontendPort }}
+  (the SPA calls /api on the same origin, so use an Ingress for a working setup)
+{{- end }}
+
+Sign up in the web UI and claim a handle; pages are public at <host>/<handle>.
+Set config.ALLOW_REGISTRATION to "false" to stop new sign-ups.

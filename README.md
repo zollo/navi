@@ -4,8 +4,9 @@ One simple page for all of your important links. Sign up, claim a handle, and
 share `https://<your-navi>/<handle>`: your photo, a tagline, a row of social
 icons, and link cards grouped under headings.
 
-**Full documentation lives in Notion** (architecture, API, configuration,
-deployment and roadmap). This README only covers getting started.
+**Full documentation lives in [Notion](https://app.notion.com/p/4221d6dd324881f9bc57f5611fb8bfb7)**
+(requirements, data model, API, configuration, deployment and roadmap). This
+README only covers getting started.
 
 ## Quick start
 

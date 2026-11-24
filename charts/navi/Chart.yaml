@@ -1,0 +1,19 @@
+apiVersion: v2
+name: navi
+description: Navi, one simple page for everyone's important links — API, SPA, Postgres.
+type: application
+# Placeholders: the release workflow (.github/workflows/ci.yml) packages the
+# chart with version and appVersion both set to the release (X.Y.Z) and publishes
+# it to oci://ghcr.io/zollo/charts. A source checkout has no appVersion, so
+# image tags fall back to "latest".
+version: 0.0.0-dev
+home: https://github.com/zollo/navi
+sources:
+  - https://github.com/zollo/navi
+keywords:
+  - links
+  - link-in-bio
+  - profile
+maintainers:
+  - name: zollo
+    url: https://github.com/zollo

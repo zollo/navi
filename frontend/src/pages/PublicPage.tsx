@@ -5,9 +5,18 @@ import PageView from "../components/PageView";
 import { toInput } from "../lib/page";
 import type { Page } from "../types";
 
-// The public page at /<handle>. No sign-in needed.
-export default function PublicPage() {
-  const { handle = "" } = useParams();
+interface Props {
+  // Set on a custom domain, which shows one page at every path.
+  handle?: string;
+  // Navi's own address (custom domains only), for links back to Navi.
+  primaryUrl?: string;
+}
+
+// The public page at /<handle>, or at the root of the owner's custom domain.
+// No sign-in needed.
+export default function PublicPage({ handle: fixedHandle, primaryUrl }: Props) {
+  const params = useParams();
+  const handle = fixedHandle ?? params.handle ?? "";
   const [page, setPage] = useState<Page | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,9 +49,15 @@ export default function PublicPage() {
               ? `Nobody has claimed @${handle} on Navi.`
               : "We couldn't load this page. Try again in a moment."}
           </p>
-          <Link className="btn" to="/register">
-            Create your own page
-          </Link>
+          {primaryUrl ? (
+            <a className="btn" href={`${primaryUrl}/register`}>
+              Create your own page
+            </a>
+          ) : (
+            <Link className="btn" to="/register">
+              Create your own page
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -51,7 +66,12 @@ export default function PublicPage() {
 
   return (
     <main className="navi-shell">
-      <PageView page={toInput(page)} avatarUrl={page.avatar_url} />
+      <PageView
+        page={toInput(page)}
+        avatarUrl={page.avatar_url}
+        shareUrl={primaryUrl ? window.location.origin : undefined}
+        homeUrl={primaryUrl}
+      />
     </main>
   );
 }

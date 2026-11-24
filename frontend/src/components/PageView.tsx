@@ -13,6 +13,10 @@ interface Props {
   avatarUrl: string | null;
   // In the editor's preview, links don't navigate and the chrome is static.
   preview?: boolean;
+  // On a custom domain: the page's own URL (shared instead of /<handle>), and
+  // Navi's home page for the logo.
+  shareUrl?: string;
+  homeUrl?: string;
 }
 
 function initials(page: PageInput): string {
@@ -22,10 +26,10 @@ function initials(page: PageInput): string {
 
 // A Navi page: logo and share button, avatar, handle, tagline, social icons and
 // sectioned link cards. Used by the public page and the editor preview.
-export default function PageView({ page, avatarUrl, preview = false }: Props) {
+export default function PageView({ page, avatarUrl, preview = false, shareUrl, homeUrl }: Props) {
   // After a copy attempt: "copied", or the URL to select by hand if copying failed.
   const [toast, setToast] = useState<string | null>(null);
-  const url = pageUrl(page.handle);
+  const url = shareUrl ?? pageUrl(page.handle);
   const title = page.title || `@${page.handle}`;
   const linkProps = preview
     ? { onClick: (e: MouseEvent) => e.preventDefault() }
@@ -48,16 +52,22 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
   return (
     <div className="navi-page">
       <div className="navi-top">
-        <RouterLink
-          to="/"
-          className="navi-chip"
-          aria-label="Navi home"
-          tabIndex={preview ? -1 : 0}
-          // In the editor preview, leaving would throw away unsaved edits.
-          onClick={preview ? (e: MouseEvent) => e.preventDefault() : undefined}
-        >
-          <Logo size={22} />
-        </RouterLink>
+        {homeUrl ? (
+          <a href={homeUrl} className="navi-chip" aria-label="Navi home">
+            <Logo size={22} />
+          </a>
+        ) : (
+          <RouterLink
+            to="/"
+            className="navi-chip"
+            aria-label="Navi home"
+            tabIndex={preview ? -1 : 0}
+            // In the editor preview, leaving would throw away unsaved edits.
+            onClick={preview ? (e: MouseEvent) => e.preventDefault() : undefined}
+          >
+            <Logo size={22} />
+          </RouterLink>
+        )}
         <button
           type="button"
           className="navi-chip"

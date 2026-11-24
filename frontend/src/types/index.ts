@@ -99,3 +99,34 @@ export interface HandleCheck {
   available: boolean;
   reason: string | null;
 }
+
+// Custom domains (/api/domains).
+export interface DomainConfig {
+  enabled: boolean;
+  cname_target: string;
+  ips: string[];
+}
+
+export interface DnsRecord {
+  type: "TXT" | "CNAME" | "A";
+  name: string;
+  value: string;
+  purpose: string;
+}
+
+export interface CustomDomain {
+  hostname: string;
+  status: "pending" | "active";
+  url: string;
+  records: DnsRecord[];
+  verified_at: string | null;
+  last_checked_at: string | null;
+  last_error: string | null;
+  created_at: string;
+}
+
+export interface DomainLookup {
+  hostname: string;
+  handle: string;
+  primary_url: string;
+}

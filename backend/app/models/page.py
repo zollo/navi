@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import enum
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.orm import Mapped, deferred, mapped_column, relationship
 
 from app.db import Base
 from app.models.base import TimestampMixin, UUIDMixin, str_enum
+
+if TYPE_CHECKING:
+    from app.models.domain import CustomDomain
 
 
 class Icon(enum.StrEnum):
@@ -72,6 +76,11 @@ class Page(UUIDMixin, TimestampMixin, Base):
         cascade="all, delete-orphan",
         order_by="Section.position",
         lazy="selectin",
+    )
+
+    # Optional custom domain; deleted with the page.
+    domain: Mapped["CustomDomain | None"] = relationship(
+        back_populates="page", cascade="all, delete-orphan", lazy="selectin"
     )
 
     @property

@@ -1,0 +1,138 @@
+{{- if .Values.customDomains.enabled }}
+{{- $fullname := include "navi.fullname" . }}
+{{- $sync := .Values.customDomains.sync }}
+# Custom domain sync (backend image, `python -m app.domain_sync`): checks DNS for
+# new domains, re-checks verified ones, and keeps one Ingress per verified domain.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $fullname }}-domain-sync
+  labels:
+    {{- include "navi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: domain-sync
+automountServiceAccountToken: {{ $sync.ingresses }}
+{{- if $sync.ingresses }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-domain-sync
+  labels:
+    {{- include "navi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: domain-sync
+rules:
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses]
+    verbs: [get, list, create, patch, update, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-domain-sync
+  labels:
+    {{- include "navi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: domain-sync
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-domain-sync
+subjects:
+  - kind: ServiceAccount
+    name: {{ $fullname }}-domain-sync
+    namespace: {{ .Release.Namespace }}
+{{- end }}
+{{- if and $sync.ingresses $sync.apiServerCIDRs }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $fullname }}-domain-sync-apiserver
+  labels:
+    {{- include "navi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: domain-sync
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "navi.selectorLabels" (list . "domain-sync") | nindent 6 }}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        {{- range $sync.apiServerCIDRs }}
+        - ipBlock:
+            cidr: {{ . | quote }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ $sync.apiServerPort }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $fullname }}-domain-sync
+  labels:
+    {{- include "navi.labels" . | nindent 4 }}
+    app.kubernetes.io/component: domain-sync
+spec:
+  schedule: {{ $sync.schedule | quote }}
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          annotations:
+            {{- include "navi.configChecksum" . | nindent 12 }}
+          labels:
+            {{- include "navi.labels" . | nindent 12 }}
+            app.kubernetes.io/component: domain-sync
+        spec:
+          serviceAccountName: {{ $fullname }}-domain-sync
+          restartPolicy: Never
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.backend.podSecurityContext | nindent 12 }}
+          containers:
+            - name: domain-sync
+              image: {{ include "navi.backendImage" . | quote }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python", "-m", "app.domain_sync"]
+              envFrom:
+                {{- include "navi.envFrom" . | nindent 16 }}
+              env:
+                - name: NAVI_SYNC_INGRESSES
+                  value: {{ $sync.ingresses | toString | quote }}
+                - name: NAVI_SYNC_INSTANCE
+                  value: {{ $fullname | quote }}
+                - name: NAVI_SYNC_NAMESPACE
+                  value: {{ .Release.Namespace | quote }}
+                - name: NAVI_SYNC_INGRESS_CLASS
+                  value: {{ .Values.customDomains.ingress.className | quote }}
+                - name: NAVI_SYNC_INGRESS_ANNOTATIONS
+                  value: {{ .Values.customDomains.ingress.annotations | toJson | quote }}
+                - name: NAVI_SYNC_INGRESS_LABELS
+                  value: {{ .Values.customDomains.ingress.labels | toJson | quote }}
+                - name: NAVI_SYNC_TLS
+                  value: {{ .Values.customDomains.ingress.tls | toString | quote }}
+                - name: NAVI_SYNC_BACKEND_SERVICE
+                  value: {{ printf "%s-backend" $fullname | quote }}
+                - name: NAVI_SYNC_FRONTEND_SERVICE
+                  value: {{ printf "%s-frontend" $fullname | quote }}
+              securityContext:
+                {{- toYaml .Values.backend.securityContext | nindent 16 }}
+              resources:
+                {{- toYaml $sync.resources | nindent 16 }}
+              volumeMounts:
+                - { name: tmp, mountPath: /tmp }
+          volumes:
+            - name: tmp
+              emptyDir: {}
+{{- end }}

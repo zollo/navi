@@ -7,10 +7,26 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import PublicPage from "./pages/PublicPage";
 import Register from "./pages/Register";
+import { useSite } from "./lib/site";
 
 // Top-level paths here must be in the backend's RESERVED_HANDLES
 // (app/services/page_service.py), since every other path is a page handle.
 export default function App() {
+  const site = useSite();
+  if (site.kind === "loading") return <div className="center-screen muted">Loading…</div>;
+  // On someone's own domain, every path shows their page; signing in and
+  // editing happen on Navi's own address.
+  if (site.kind === "custom") {
+    return (
+      <Routes>
+        <Route
+          path="*"
+          element={<PublicPage handle={site.handle} primaryUrl={site.primaryUrl} />}
+        />
+      </Routes>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />

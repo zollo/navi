@@ -16,6 +16,9 @@ dependencies = [
     "pyjwt==2.15.1",
     "python-multipart==0.0.32",
     "email-validator==2.3.0",
+    # Custom domains: DNS verification, and the Kubernetes API (domain sync job).
+    "dnspython==2.9.2",
+    "httpx==0.28.1",
 ]
 
 [project.optional-dependencies]

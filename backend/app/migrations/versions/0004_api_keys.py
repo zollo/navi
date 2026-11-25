@@ -12,6 +12,10 @@ down_revision = "0003_custom_domains"
 branch_labels = None
 depends_on = None
 
+# Top-level paths this release claims; existing pages with these handles move to
+# "<handle>-<6 hex>" (the old URL would hit the MCP endpoint / setup page anyway).
+NEWLY_RESERVED = ("integrations", "mcp")
+
 
 def upgrade() -> None:
     op.create_table(
@@ -27,6 +31,14 @@ def upgrade() -> None:
     )
     op.create_index("ix_api_keys_user_id", "api_keys", ["user_id"])
     op.create_index("ix_api_keys_key_hash", "api_keys", ["key_hash"], unique=True)
+
+    bind = op.get_bind()
+    pages = sa.table("pages", sa.column("id", sa.Uuid()), sa.column("handle", sa.String()))
+    rows = bind.execute(sa.select(pages.c.id, pages.c.handle).where(pages.c.handle.in_(NEWLY_RESERVED)))
+    for page_id, handle in rows.fetchall():
+        new = f"{handle}-{page_id.hex[:6]}"
+        print(f"Renaming page handle {handle!r} to {new!r}: /{handle} is now reserved")
+        bind.execute(sa.update(pages).where(pages.c.id == page_id).values(handle=new))
 
 
 def downgrade() -> None:

@@ -70,3 +70,35 @@ def test_bad_keys_are_rejected(client, alice):
         resp = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 401
     assert client.post("/api/api-keys", json={"name": ""}, headers=alice).status_code == 422
+
+
+def test_key_limit(client, alice, monkeypatch):
+    from app.services import api_key_service
+
+    monkeypatch.setattr(api_key_service, "MAX_KEYS_PER_USER", 2)
+    _create(client, alice, "a")
+    _create(client, alice, "b")
+    resp = client.post("/api/api-keys", json={"name": "c"}, headers=alice)
+    assert resp.status_code == 422 and "at most 2" in resp.json()["detail"]
+
+
+def test_last_used_is_throttled(client, alice):
+    as_key = {"Authorization": f"Bearer {_create(client, alice)['key']}"}
+    client.get("/api/auth/me", headers=as_key)
+    first = client.get("/api/api-keys", headers=alice).json()[0]["last_used_at"]
+    client.get("/api/auth/me", headers=as_key)
+    assert client.get("/api/api-keys", headers=alice).json()[0]["last_used_at"] == first
+
+
+def test_access_log_redacts_keys():
+    import logging
+
+    from app.main import _RedactKeys
+
+    record = logging.LogRecord(
+        "uvicorn.access", logging.INFO, "", 0, '%s - "%s %s HTTP/%s" %d',
+        ("1.2.3.4", "POST", "/mcp?key=navi_secret&x=1", "1.1", 200), None,
+    )
+    _RedactKeys().filter(record)
+    assert "navi_secret" not in record.getMessage()
+    assert "/mcp?key=[redacted]&x=1" in record.getMessage()

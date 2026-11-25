@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -16,6 +17,25 @@ from app.core.errors import NaviError
 from app.mcp_server import MCP_PATH, NaviMCP
 
 logging.basicConfig(level=logging.INFO)
+
+
+class _RedactKeys(logging.Filter):
+    """Keep API keys passed as ?key= (URL-only MCP clients) out of access logs."""
+
+    _pattern = re.compile(r"([?&]key=)[^&\s]*")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(
+                self._pattern.sub(r"\1[redacted]", a) if isinstance(a, str) else a
+                for a in record.args
+            )
+        elif isinstance(record.msg, str):
+            record.msg = self._pattern.sub(r"\1[redacted]", record.msg)
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(_RedactKeys())
 
 DESCRIPTION = """\
 Navi gives everyone one simple page for their important links, public at

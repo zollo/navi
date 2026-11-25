@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import Invalid, NotFound
@@ -27,6 +27,9 @@ async def list_keys(db: AsyncSession, user: User) -> list[ApiKey]:
 
 async def create_key(db: AsyncSession, user: User, name: str) -> tuple[ApiKey, str]:
     """A new key for `user`. Returns the row and the full key, which is never stored."""
+    # Lock the user's row so concurrent requests can't both pass the limit check
+    # (FOR UPDATE on Postgres; SQLite serializes writers anyway).
+    await db.execute(select(User.id).where(User.id == user.id).with_for_update())
     if len(await list_keys(db, user)) >= MAX_KEYS_PER_USER:
         raise Invalid(f"You can have at most {MAX_KEYS_PER_USER} API keys; revoke one first")
     key = generate_api_key()
@@ -51,12 +54,19 @@ async def resolve_key(db: AsyncSession, key: str) -> User | None:
     row = result.scalar_one_or_none()
     if row is None or not row.user.is_active:
         return None
+    # Conditional update: concurrent requests write at most once per interval, and an
+    # older request can't overwrite a newer timestamp.
     now = datetime.now(UTC)
-    last = row.last_used_at
-    if last is not None and last.tzinfo is None:  # SQLite drops the zone
-        last = last.replace(tzinfo=UTC)
-    if last is None or now - last >= LAST_USED_RESOLUTION:
-        row.last_used_at = now
+    result = await db.execute(
+        update(ApiKey)
+        .where(
+            ApiKey.id == row.id,
+            or_(ApiKey.last_used_at.is_(None), ApiKey.last_used_at < now - LAST_USED_RESOLUTION),
+        )
+        .values(last_used_at=now)
+        .execution_options(synchronize_session=False)
+    )
+    if result.rowcount:
         await db.commit()
         await db.refresh(row.user)
     return row.user

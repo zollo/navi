@@ -12,3 +12,10 @@ data:
   POSTGRES_PORT: {{ include "navi.postgresPort" . | quote }}
   POSTGRES_USER: {{ include "navi.postgresUser" . | quote }}
   POSTGRES_DB: {{ include "navi.postgresDatabase" . | quote }}
+  {{- with .Values.customDomains }}
+  CUSTOM_DOMAINS_ENABLED: {{ .enabled | toString | quote }}
+  CUSTOM_DOMAIN_TARGET: {{ .target | quote }}
+  CUSTOM_DOMAIN_IPS: {{ join "," .ips | quote }}
+  CUSTOM_DOMAIN_BLOCKED: {{ join "," .blocked | quote }}
+  CUSTOM_DOMAIN_RESOLVERS: {{ join "," .resolvers | quote }}
+  {{- end }}

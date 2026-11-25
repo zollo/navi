@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api/client";
+import CustomDomainCard from "../components/CustomDomainCard";
 import { useAuth } from "../context/AuthContext";
 import type { BuildInfo, User } from "../types";
 
@@ -64,6 +65,8 @@ export default function Account() {
         </div>
         <button className="btn">Save</button>
       </form>
+
+      <CustomDomainCard />
 
       <div className="card">
         <h2>Danger zone</h2>

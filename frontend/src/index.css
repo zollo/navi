@@ -775,3 +775,29 @@ input[type="file"] { max-width: 100%; font-size: 15px; }
 /* Linktree import */
 .import-toggle { margin-bottom: 12px; }
 .import-warnings { margin: 0 0 12px; padding-left: 18px; }
+
+/* ── Custom domain (Account) ───────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.badge.active { background: var(--alert-success-bg); color: var(--alert-success-fg); }
+.badge.pending { background: var(--alert-info-bg); color: var(--alert-info-fg); }
+.dns-records { display: grid; gap: 10px; margin-top: 8px; }
+.dns-record {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.dns-type { font-weight: 700; font-size: 13px; padding-top: 6px; }
+.dns-fields { display: grid; gap: 4px; min-width: 0; }
+.dns-field { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 6px; }
+.dns-field code { overflow-wrap: anywhere; font-size: 13px; }
+details summary { cursor: pointer; }

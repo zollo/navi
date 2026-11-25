@@ -133,6 +133,53 @@ ingress:
   #  - secretName: navi-tls
   #    hosts: [navi.example.com]
 
+# Custom domains: users show their page on their own domain (www.example.com).
+# Users add a TXT record (ownership) and a CNAME/A record pointing at this
+# cluster; a CronJob verifies DNS and creates one Ingress per verified domain.
+# TLS: the Ingress annotations below should request a certificate per domain,
+# e.g. a cert-manager ClusterIssuer with an HTTP-01 solver (DNS-01 can't work
+# for domains you don't control), so port 80 must reach the ingress controller.
+customDomains:
+  enabled: false
+  # -- Hostname users point a CNAME at. Default: NAVI_PUBLIC_URL's host.
+  target: ""
+  # -- Public IPv4 address(es) for apex domains (example.com can't have a
+  # CNAME). Optional; without it, apex users are told to use the CNAME too.
+  ips: []
+  # -- Domains (and their subdomains) nobody may claim, e.g. your own zone.
+  # NAVI_PUBLIC_URL's host and the target are always blocked.
+  blocked: []
+  # -- DNS servers used for verification (public ones, so split-horizon DNS
+  # inside the cluster doesn't skew the answer).
+  resolvers: [1.1.1.1, 8.8.8.8]
+  sync:
+    # -- How often pending domains are checked and Ingresses reconciled.
+    schedule: "*/2 * * * *"
+    # -- Create/delete one Ingress per verified domain (Role on ingresses in
+    # this namespace). false = only check DNS; route the domains yourself.
+    ingresses: true
+    # -- CIDRs of the Kubernetes API server endpoints (e.g. the control-plane
+    # node IPs). When set, a NetworkPolicy lets the sync job reach them on
+    # apiServerPort, for namespaces whose policies deny egress by default.
+    apiServerCIDRs: []
+    apiServerPort: 6443
+    resources:
+      requests:
+        cpu: 10m
+        memory: 96Mi
+      limits:
+        memory: 256Mi
+  ingress:
+    className: ""
+    # -- Annotations for each custom-domain Ingress, e.g.
+    # cert-manager.io/cluster-issuer: letsencrypt-http01
+    annotations: {}
+    # -- Extra labels for each custom-domain Ingress (they always carry
+    # navi.zollo.net/custom-domain: "true", for admission policies).
+    labels: {}
+    # -- Give each Ingress a tls section (secret <ingress-name>-tls).
+    tls: true
+
 # Bundled PostgreSQL (single instance, StatefulSet + PVC). It holds all durable
 # data: users, pages, links and avatars.
 postgresql:

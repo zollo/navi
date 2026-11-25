@@ -18,6 +18,8 @@ dependencies = [
     "email-validator==2.3.0",
     # Outbound HTTP (Linktree import); also Starlette's TestClient transport.
     "httpx2==2.16.2",
+    # Custom domains: DNS verification.
+    "dnspython==2.9.2",
 ]
 
 [project.optional-dependencies]

@@ -157,6 +157,9 @@ jobs:
           helm lint charts/navi --set existingSecret=lint
           helm template t charts/navi --set existingSecret=lint \
             --set ingress.enabled=true --set postgresql.backup.enabled=true > /dev/null
+          helm template t charts/navi --set existingSecret=lint \
+            --set customDomains.enabled=true \
+            --set 'customDomains.sync.apiServerCIDRs={10.0.0.1/32}' > /dev/null
 
   # Version & release on merges to main. The first release is seeded at v1.0.0;
   # afterwards the next version is computed from commit history (Conventional

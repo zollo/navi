@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from urllib.parse import urlsplit
 
 from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -57,6 +58,21 @@ class Settings(BaseSettings):
     max_avatar_kb: int = Field(default=1024, alias="MAX_AVATAR_KB")
     max_background_kb: int = Field(default=2048, alias="MAX_BACKGROUND_KB")
 
+    # Custom domains (www.example.com showing a page). Off by default: serving them
+    # needs DNS + TLS for hosts Navi doesn't own (see charts/navi customDomains).
+    custom_domains_enabled: bool = Field(default=False, alias="CUSTOM_DOMAINS_ENABLED")
+    # Hostname users point a CNAME at. Defaults to NAVI_PUBLIC_URL's host.
+    custom_domain_target: str = Field(default="", alias="CUSTOM_DOMAIN_TARGET")
+    # Comma-separated IPv4 addresses for apex domains (which can't use a CNAME).
+    # Defaults to whatever the target resolves to.
+    custom_domain_ips: str = Field(default="", alias="CUSTOM_DOMAIN_IPS")
+    # Public resolvers used for verification, so split-horizon DNS inside the
+    # cluster or LAN can't skew the answer. Empty = the system resolver.
+    custom_domain_resolvers: str = Field(default="1.1.1.1,8.8.8.8", alias="CUSTOM_DOMAIN_RESOLVERS")
+    # Comma-separated domains nobody may claim (they and their subdomains), e.g. your
+    # own zone. The public URL's host and the CNAME target are always blocked.
+    custom_domain_blocked: str = Field(default="", alias="CUSTOM_DOMAIN_BLOCKED")
+
     @model_validator(mode="after")
     def _require_real_secret(self) -> Settings:
         if self.env == "production" and self.secret_key.strip() in _PLACEHOLDER_SECRETS:
@@ -100,6 +116,37 @@ class Settings(BaseSettings):
     @property
     def admin_email_set(self) -> frozenset[str]:
         return frozenset(e.strip().lower() for e in self.admin_emails.split(",") if e.strip())
+
+    @property
+    def public_host(self) -> str:
+        return (urlsplit(self.public_url).hostname or "").lower()
+
+    @property
+    def custom_domain_cname_target(self) -> str:
+        return (self.custom_domain_target.strip().rstrip(".") or self.public_host).lower()
+
+    @property
+    def custom_domain_ip_list(self) -> list[str]:
+        return _split(self.custom_domain_ips)
+
+    @property
+    def custom_domain_resolver_list(self) -> list[str]:
+        return _split(self.custom_domain_resolvers)
+
+    @property
+    def custom_domain_blocked_list(self) -> list[str]:
+        blocked = [d.lower().strip(".") for d in _split(self.custom_domain_blocked)]
+        host = self.public_host
+        if host and host != "localhost":
+            blocked.append(host)
+        target = self.custom_domain_cname_target
+        if target and target != "localhost":
+            blocked.append(target)
+        return sorted(set(blocked))
+
+
+def _split(value: str) -> list[str]:
+    return [v.strip() for v in value.split(",") if v.strip()]
 
 
 @lru_cache

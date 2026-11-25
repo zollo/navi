@@ -976,6 +976,200 @@
           }
         ]
       }
+    },
+    "/api/domains/config": {
+      "get": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Get Domain Config",
+        "description": "Whether custom domains are offered, and the CNAME/A targets to point them at.",
+        "operationId": "get_domain_config",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/domains/lookup": {
+      "get": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Lookup Domain",
+        "description": "The page a verified custom domain shows, or 404.\n\nThe SPA calls this to find out which page to render on a custom domain. It also\nworks as an on-demand TLS \"ask\" endpoint (e.g. Caddy): 200 means the domain is\nallowed a certificate.",
+        "operationId": "lookup_domain",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300,
+              "title": "Domain"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainLookup"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/domains/me": {
+      "get": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Get My Domain",
+        "description": "Your page's custom domain and the DNS records it needs, or 404 if none.",
+        "operationId": "get_my_domain",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Set My Domain",
+        "description": "Connect a domain to your page, replacing any previous one.\n\nThe domain starts out pending: add the returned DNS records, then verify. It's\nchecked automatically every few minutes for a week, too.",
+        "operationId": "set_my_domain",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Domain added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Delete My Domain",
+        "description": "Disconnect your custom domain. Your page stays at /<handle>.",
+        "operationId": "delete_my_domain",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/domains/me/verify": {
+      "post": {
+        "tags": [
+          "domains"
+        ],
+        "summary": "Verify My Domain",
+        "description": "Check your domain's DNS records now.",
+        "operationId": "verify_my_domain",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1202,6 +1396,185 @@
           "shadow"
         ],
         "title": "ButtonStyle"
+      },
+      "DnsRecord": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "TXT",
+              "CNAME",
+              "A"
+            ],
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "purpose": {
+            "type": "string",
+            "title": "Purpose"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "value",
+          "purpose"
+        ],
+        "title": "DnsRecord",
+        "description": "A record the owner adds at their DNS provider."
+      },
+      "DomainConfig": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "cname_target": {
+            "type": "string",
+            "title": "Cname Target"
+          },
+          "ips": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ips"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "cname_target",
+          "ips"
+        ],
+        "title": "DomainConfig",
+        "description": "Whether this server offers custom domains, and where to point them."
+      },
+      "DomainIn": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Hostname"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname"
+        ],
+        "title": "DomainIn"
+      },
+      "DomainLookup": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "primary_url": {
+            "type": "string",
+            "title": "Primary Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "handle",
+          "primary_url"
+        ],
+        "title": "DomainLookup",
+        "description": "Which page a verified custom domain shows."
+      },
+      "DomainRead": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/components/schemas/DnsRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "status",
+          "url",
+          "records",
+          "verified_at",
+          "last_checked_at",
+          "last_error",
+          "created_at"
+        ],
+        "title": "DomainRead"
       },
       "Font": {
         "type": "string",

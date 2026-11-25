@@ -4,12 +4,22 @@ import { Link as RouterLink } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import AvatarEditor from "../components/AvatarEditor";
 import IconSelect from "../components/IconSelect";
+import LinktreeImport from "../components/LinktreeImport";
 import PageView from "../components/PageView";
 import RowActions from "../components/RowActions";
 import { DEFAULT_MAX_AVATAR_KB, loadImage } from "../lib/avatar";
 import { guessIcon } from "../lib/icons";
-import { blankPage, handleProblem, isSafeUrl, move, normalizeHandle, toInput } from "../lib/page";
-import type { HandleCheck, Link, Page, PageInput, PublicConfig, Section, SocialLink } from "../types";
+import {
+  applyImport,
+  blankPage,
+  dataUrlToFile,
+  handleProblem,
+  isSafeUrl,
+  move,
+  normalizeHandle,
+  toInput,
+} from "../lib/page";
+import type { HandleCheck, Link, Page, PageImport, PageInput, PublicConfig, Section, SocialLink } from "../types";
 
 // Live availability check for a handle, debounced while typing.
 function useHandleCheck(handle: string, current: string | null) {
@@ -122,6 +132,9 @@ export default function Editor() {
   const [missing, setMissing] = useState(false);
   const [draft, setDraft] = useState<PageInput | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  // An imported profile picture (data: URL), uploaded when the page is saved.
+  const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
+  const [imported, setImported] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -161,7 +174,8 @@ export default function Editor() {
     return <div className="page muted">{error ? <div className="alert error">{error}</div> : "Loading…"}</div>;
   }
 
-  const dirty = JSON.stringify(draft) !== JSON.stringify(toInput(loaded));
+  const dirty = JSON.stringify(draft) !== JSON.stringify(toInput(loaded)) || pendingAvatar !== null;
+  const shownAvatar = pendingAvatar ?? avatarUrl;
   const update = (patch: Partial<PageInput>) => setDraft({ ...draft, ...patch });
   const setSocials = (socials: SocialLink[]) => update({ socials });
   const setSections = (sections: Section[]) => update({ sections });
@@ -181,13 +195,31 @@ export default function Editor() {
     }
     setBusy(true);
     try {
-      adopt(await api.put<Page>("/api/pages/me", { ...draft, handle: normalizeHandle(draft.handle) }));
+      let saved = await api.put<Page>("/api/pages/me", { ...draft, handle: normalizeHandle(draft.handle) });
+      if (pendingAvatar) {
+        try {
+          saved = await api.upload<Page>("/api/pages/me/avatar", dataUrlToFile(pendingAvatar));
+        } catch (err) {
+          const why = err instanceof ApiError ? err.message : "upload failed";
+          setError(`Saved your page, but couldn't add the imported photo: ${why}`);
+        }
+        setPendingAvatar(null);
+      }
+      adopt(saved);
+      setImported(false);
       setNotice("Saved. Your page is live.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't save your page");
     } finally {
       setBusy(false);
     }
+  };
+
+  const takeImport = (found: PageImport) => {
+    setError(null);
+    setDraft(applyImport(draft, found));
+    setPendingAvatar(found.avatar_data_url);
+    setImported(true);
   };
 
   // Any image the browser can decode (HEIC on Safari, AVIF, BMP…) opens in the
@@ -206,9 +238,10 @@ export default function Editor() {
   };
 
   const editCurrent = async () => {
-    if (!avatarUrl) return;
+    if (!shownAvatar) return;
     try {
-      const resp = await fetch(api.baseUrl + avatarUrl);
+      // fetch() also reads the data: URL of an imported, not yet saved photo.
+      const resp = await fetch(api.assetUrl(shownAvatar));
       if (!resp.ok) throw new Error();
       await openEditor(await resp.blob());
     } catch {
@@ -217,6 +250,7 @@ export default function Editor() {
   };
 
   const uploadAvatar = async (file: File) => {
+    setPendingAvatar(null);
     try {
       const p = await api.upload<Page>("/api/pages/me/avatar", file);
       setAvatarUrl(p.avatar_url);
@@ -227,6 +261,10 @@ export default function Editor() {
   };
 
   const removeAvatar = async () => {
+    if (pendingAvatar) {
+      setPendingAvatar(null);
+      return;
+    }
     try {
       setAvatarUrl((await api.del<Page>("/api/pages/me/avatar")).avatar_url);
     } catch (err) {
@@ -262,6 +300,11 @@ export default function Editor() {
           <fieldset disabled={busy}>
           {error && <div className="alert error prewrap">{error}</div>}
           {notice && !dirty && <div className="alert success">{notice}</div>}
+          {imported && dirty && (
+            <div className="alert info">Imported from Linktree. Review your page, then save to publish it.</div>
+          )}
+
+          <LinktreeImport onApply={takeImport} disabled={busy} />
 
           <div className="card">
             <h2>Profile</h2>
@@ -280,8 +323,8 @@ export default function Editor() {
                 if (f) void openEditor(f);
               }}
             >
-              {avatarUrl ? (
-                <img className="navi-avatar small" src={api.baseUrl + avatarUrl} alt="Your avatar" />
+              {shownAvatar ? (
+                <img className="navi-avatar small" src={api.assetUrl(shownAvatar)} alt="Your avatar" />
               ) : (
                 <div className="navi-avatar small placeholder" aria-hidden>
                   ?
@@ -290,9 +333,9 @@ export default function Editor() {
               <div className="avatar-actions">
                 <div className="row">
                   <button type="button" className="btn secondary small" onClick={() => fileRef.current?.click()}>
-                    {avatarUrl ? "Change" : "Add photo"}
+                    {shownAvatar ? "Change" : "Add photo"}
                   </button>
-                  {avatarUrl && (
+                  {shownAvatar && (
                     <>
                       <button type="button" className="btn ghost small" onClick={editCurrent}>
                         Edit
@@ -487,7 +530,15 @@ export default function Editor() {
               {busy ? "Saving…" : dirty ? "Save changes" : "Saved"}
             </button>
             {dirty && (
-              <button type="button" className="btn secondary" onClick={() => setDraft(toInput(loaded))}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => {
+                  setDraft(toInput(loaded));
+                  setPendingAvatar(null);
+                  setImported(false);
+                }}
+              >
                 Discard
               </button>
             )}
@@ -497,7 +548,7 @@ export default function Editor() {
 
         <aside className="editor-preview" aria-label="Preview">
           <div className="phone">
-            <PageView page={{ ...draft, handle: normalizeHandle(draft.handle) }} avatarUrl={avatarUrl} preview />
+            <PageView page={{ ...draft, handle: normalizeHandle(draft.handle) }} avatarUrl={shownAvatar} preview />
           </div>
         </aside>
       </div>

@@ -77,7 +77,7 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
 
       <header className="navi-head">
         {avatarUrl ? (
-          <img className="navi-avatar" src={api.baseUrl + avatarUrl} alt="" />
+          <img className="navi-avatar" src={api.assetUrl(avatarUrl)} alt="" />
         ) : (
           <div className="navi-avatar placeholder" aria-hidden>
             {initials(page)}

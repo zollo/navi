@@ -27,6 +27,7 @@ config:
   ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
   JWT_ALGORITHM: HS256
   ALLOW_REGISTRATION: "true"
+  LINKTREE_IMPORT_ENABLED: "true"
   MAX_AVATAR_KB: "1024"
 
 # -- Name of an existing Secret with the sensitive settings. Keys: SECRET_KEY,

@@ -4,7 +4,7 @@ import { DEFAULT_THEME, normalizeTheme } from "./theme";
 // Mirrors backend/app/services/page_service.py HANDLE_RE / RESERVED_HANDLES.
 const HANDLE_RE = /^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/;
 const RESERVED = new Set([
-  "about", "account", "admin", "api", "app", "assets", "auth", "dashboard",
+  "about", "account", "admin", "api", "app", "apple-touch-icon.png", "assets", "auth", "dashboard",
   "docs", "edit", "editor", "favicon.svg", "handles", "help", "home", "icons",
   "index.html",
   "login", "logout", "me", "navi", "new", "openapi.json", "privacy", "redoc",

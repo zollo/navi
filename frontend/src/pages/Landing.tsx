@@ -10,7 +10,7 @@ export default function Landing() {
   return (
     <div className="center-screen">
       <div className="landing">
-        <Logo size={64} />
+        <Logo size={88} />
         <h1>Navi</h1>
         <p className="subtitle">One simple page for all of your important links.</p>
         <div className="row" style={{ justifyContent: "center" }}>

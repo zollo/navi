@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { api } from "../api/client";
 import { ICONS, NaviIcon } from "../lib/icons";
 import { canShare, copyText, pageUrl } from "../lib/page";
-import { backgroundImageUrl, themeStyle } from "../lib/theme";
+import { backgroundImageUrl, hasContentBackground, themeStyle } from "../lib/theme";
 import type { PageInput } from "../types";
 import LinkMenu from "./LinkMenu";
 import Logo from "./Logo";
@@ -64,7 +64,7 @@ export default function PageView({
   const Shell = preview ? "div" : "main";
 
   return (
-    <Shell className={`navi-shell btn-${page.theme.button_style} font-${page.theme.font} ${preview ? "preview" : ""}`} style={style}>
+    <Shell className={`navi-shell btn-${page.theme.button_style} font-${page.theme.font} ${hasContentBackground(page.theme) ? "has-content" : ""} ${preview ? "preview" : ""}`} style={style}>
     <div className="navi-backdrop" aria-hidden />
     <div className="navi-page">
       <div className="navi-top">
@@ -102,13 +102,15 @@ export default function PageView({
       )}
 
       <header className="navi-head">
-        {avatarUrl ? (
-          <img className="navi-avatar" src={api.assetUrl(avatarUrl)} alt="" />
-        ) : (
-          <div className="navi-avatar placeholder" aria-hidden>
-            {initials(page)}
-          </div>
-        )}
+        <div className="navi-avatar-ring">
+          {avatarUrl ? (
+            <img className="navi-avatar" src={api.assetUrl(avatarUrl)} alt="" />
+          ) : (
+            <div className="navi-avatar placeholder" aria-hidden>
+              {initials(page)}
+            </div>
+          )}
+        </div>
         <h1>{title}</h1>
         {page.tagline && <p className="navi-tagline">{page.tagline}</p>}
         {page.socials.length > 0 && (

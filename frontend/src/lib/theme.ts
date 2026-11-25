@@ -1,8 +1,12 @@
 import type { CSSProperties } from "react";
 import type {
+  AvatarBorder,
+  AvatarBorderKind,
   AvatarShape,
   ButtonShape,
   ButtonStyle,
+  ContentBackground,
+  ContentBackgroundKind,
   FontName,
   PageTheme,
   ThemeBackground,
@@ -19,6 +23,24 @@ export const DEFAULT_BACKGROUND: ThemeBackground = {
   image_dark: true,
 };
 
+export const DEFAULT_AVATAR_BORDER: AvatarBorder = {
+  kind: "none",
+  color: null,
+  gradient_from: null,
+  gradient_to: null,
+  gradient_angle: 135,
+  width: 4,
+};
+
+export const DEFAULT_CONTENT_BACKGROUND: ContentBackground = {
+  kind: "none",
+  color: null,
+  gradient_from: null,
+  gradient_to: null,
+  gradient_angle: 180,
+  opacity: 80,
+};
+
 export const DEFAULT_THEME: PageTheme = {
   background: DEFAULT_BACKGROUND,
   font: "system",
@@ -28,6 +50,8 @@ export const DEFAULT_THEME: PageTheme = {
   button_color: null,
   button_text_color: null,
   avatar_shape: "circle",
+  avatar_border: DEFAULT_AVATAR_BORDER,
+  content_background: DEFAULT_CONTENT_BACKGROUND,
 };
 
 // Self-hosted with Fontsource (see lib/fonts.ts); browsers only download a font
@@ -64,8 +88,26 @@ export const AVATAR_SHAPES: { value: AvatarShape; label: string }[] = [
   { value: "square", label: "Square" },
 ];
 
+export const AVATAR_BORDER_KINDS: { value: AvatarBorderKind; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "solid", label: "Color" },
+  { value: "gradient", label: "Gradient" },
+];
+
+export const CONTENT_BACKGROUND_KINDS: { value: ContentBackgroundKind; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "solid", label: "Color" },
+  { value: "gradient", label: "Gradient" },
+];
+
 const RADII: Record<ButtonShape, string> = { square: "4px", rounded: "14px", pill: "999px" };
 const AVATAR_RADII: Record<AvatarShape, string> = { circle: "50%", rounded: "24px", square: "6px" };
+// Corner radius of the ring around the photo, so it hugs the photo's corners.
+function ringRadius(shape: AvatarShape, width: number): string {
+  if (shape === "rounded") return `${24 + width}px`;
+  if (shape === "square") return `${6 + width}px`;
+  return "50%";
+}
 
 export const GRADIENT_PRESETS: [string, string][] = [
   ["#ff7e5f", "#feb47b"],
@@ -144,6 +186,18 @@ export const THEME_PRESETS: { name: string; theme: PageTheme }[] = [
     },
   },
   {
+    name: "Neon",
+    theme: {
+      ...DEFAULT_THEME,
+      background: { ...DEFAULT_BACKGROUND, kind: "gradient", gradient_from: "#ff0080", gradient_to: "#7928ca", gradient_angle: 135 },
+      font: "inter",
+      button_style: "glass",
+      button_shape: "pill",
+      avatar_border: { ...DEFAULT_AVATAR_BORDER, kind: "gradient", gradient_from: "#fde68a", gradient_to: "#ff0080", width: 4 },
+      content_background: { ...DEFAULT_CONTENT_BACKGROUND, kind: "solid", color: "#111318", opacity: 45 },
+    },
+  },
+  {
     name: "Forest",
     theme: {
       ...DEFAULT_THEME,
@@ -214,6 +268,58 @@ function backgroundIsDark(bg: ThemeBackground, hasImage: boolean): boolean | nul
   return null;
 }
 
+// A paint for a solid-or-gradient fill, or null when it is off or incomplete.
+function paint(fill: {
+  kind: string;
+  color: string | null;
+  gradient_from: string | null;
+  gradient_to: string | null;
+  gradient_angle: number;
+}): string | null {
+  if (fill.kind === "solid" && fill.color) return fill.color;
+  if (fill.kind === "gradient" && fill.gradient_from && fill.gradient_to) {
+    return `linear-gradient(${fill.gradient_angle}deg, ${fill.gradient_from}, ${fill.gradient_to})`;
+  }
+  return null;
+}
+
+// The panel's own color (a gradient counts as the mix of its ends), or null.
+function panelColor(content: ContentBackground): string | null {
+  if (content.kind === "solid" && content.color) return content.color;
+  if (content.kind === "gradient" && content.gradient_from && content.gradient_to) {
+    return mix(content.gradient_from, content.gradient_to);
+  }
+  return null;
+}
+
+// `top` laid over `base` at `opacity` (0-1).
+function blend(base: string, top: string, opacity: number): string {
+  const [b, t] = [rgb(base), rgb(top)];
+  return toHex([0, 1, 2].map((i) => b[i] + (t[i] - b[i]) * opacity) as [number, number, number]);
+}
+
+// Whether the text sits on something dark: the panel blended over the page
+// background. Null when that follows the viewer's light/dark mode.
+function contentIsDark(content: ContentBackground, bg: ThemeBackground, hasImage: boolean): boolean | null {
+  const panel = panelColor(content);
+  const opacity = content.opacity / 100;
+  const page = backgroundIsDark(bg, hasImage);
+  if (!panel) return page;
+  // Approximate the page background by one color to blend the panel over.
+  let base: string | null = null;
+  if (hasImage) base = bg.image_dark ? "#000000" : "#ffffff";
+  else if (bg.kind === "solid" && bg.color) base = bg.color;
+  else if (bg.kind === "gradient" && bg.gradient_from && bg.gradient_to) base = mix(bg.gradient_from, bg.gradient_to);
+  if (base) return isDark(blend(base, panel, opacity));
+  // The default background follows light/dark mode: only a mostly opaque panel decides.
+  return opacity >= 0.5 ? isDark(panel) : null;
+}
+
+// Whether the theme puts a panel behind the content (PageView adds a class).
+export function hasContentBackground(theme: PageTheme): boolean {
+  return paint(theme.content_background ?? DEFAULT_CONTENT_BACKGROUND) !== null;
+}
+
 // CSS custom properties that style a page (see `.navi-shell` in index.css).
 // `imageUrl` is absolute (already prefixed with the API base URL) or null.
 export function themeStyle(theme: PageTheme, imageUrl: string | null): CSSProperties {
@@ -234,11 +340,29 @@ export function themeStyle(theme: PageTheme, imageUrl: string | null): CSSProper
     vars["--nv-bg"] = `linear-gradient(${bg.gradient_angle}deg, ${bg.gradient_from}, ${bg.gradient_to})`;
   }
 
-  // Text: the chosen color, else readable on the background, else the app's.
-  const dark = backgroundIsDark(bg, imageUrl !== null);
+  // Content panel: over the page background, which shows through below 100%.
+  const content = theme.content_background ?? DEFAULT_CONTENT_BACKGROUND;
+  const panel = paint(content);
+  if (panel) {
+    vars["--nv-content-bg"] = panel;
+    vars["--nv-content-opacity"] = String(content.opacity / 100);
+  }
+  const onPanel = panel !== null;
+
+  // Avatar ring
+  const border = theme.avatar_border ?? DEFAULT_AVATAR_BORDER;
+  const ring = paint(border);
+  if (ring) {
+    vars["--nv-avatar-ring"] = ring;
+    vars["--nv-avatar-ring-width"] = `${border.width}px`;
+    vars["--nv-avatar-ring-radius"] = ringRadius(theme.avatar_shape, border.width);
+  }
+
+  // Text: the chosen color, else readable on the panel and background, else the app's.
+  const dark = contentIsDark(content, bg, imageUrl !== null);
   const text = theme.text_color ?? (dark === null ? null : dark ? "#ffffff" : "#111318");
   if (text) vars["--nv-text"] = text;
-  if (imageUrl && !theme.text_color) {
+  if (imageUrl && !theme.text_color && (!onPanel || content.opacity < 50)) {
     vars["--nv-text-shadow"] = dark ? "0 1px 3px rgba(0, 0, 0, 0.55)" : "0 1px 2px rgba(255, 255, 255, 0.6)";
   }
 
@@ -292,7 +416,19 @@ export function normalizeTheme(theme: Partial<PageTheme> | null | undefined): Pa
     ...DEFAULT_THEME,
     ...(theme ?? {}),
     background: { ...DEFAULT_BACKGROUND, ...(theme?.background ?? {}) },
+    avatar_border: { ...DEFAULT_AVATAR_BORDER, ...(theme?.avatar_border ?? {}) },
+    content_background: { ...DEFAULT_CONTENT_BACKGROUND, ...(theme?.content_background ?? {}) },
   };
+}
+
+// Fill in colors when switching a solid-or-gradient fill on, so the theme stays valid.
+export function withFillKind<T extends AvatarBorder | ContentBackground>(fill: T, kind: T["kind"], color: string): T {
+  const next = { ...fill, kind };
+  if (kind === "solid" && !next.color) next.color = color;
+  if (kind === "gradient" && (!next.gradient_from || !next.gradient_to)) {
+    [next.gradient_from, next.gradient_to] = GRADIENT_PRESETS[2];
+  }
+  return next;
 }
 
 // Pick a background kind, filling in sensible colors so the theme stays valid.

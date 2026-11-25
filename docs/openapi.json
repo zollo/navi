@@ -1187,6 +1187,73 @@
         ],
         "title": "AuthConfig"
       },
+      "AvatarBorder": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AvatarBorderKind",
+            "default": "none"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "gradient_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient From"
+          },
+          "gradient_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient To"
+          },
+          "gradient_angle": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Gradient Angle",
+            "default": 135
+          },
+          "width": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 1.0,
+            "title": "Width",
+            "default": 4
+          }
+        },
+        "type": "object",
+        "title": "AvatarBorder",
+        "description": "A ring around the profile photo, in one color or a gradient."
+      },
+      "AvatarBorderKind": {
+        "type": "string",
+        "enum": [
+          "none",
+          "solid",
+          "gradient"
+        ],
+        "title": "AvatarBorderKind"
+      },
       "AvatarShape": {
         "type": "string",
         "enum": [
@@ -1396,6 +1463,73 @@
           "shadow"
         ],
         "title": "ButtonStyle"
+      },
+      "ContentBackground": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ContentBackgroundKind",
+            "default": "none"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "gradient_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient From"
+          },
+          "gradient_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient To"
+          },
+          "gradient_angle": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Gradient Angle",
+            "default": 180
+          },
+          "opacity": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Opacity",
+            "default": 80
+          }
+        },
+        "type": "object",
+        "title": "ContentBackground",
+        "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+      },
+      "ContentBackgroundKind": {
+        "type": "string",
+        "enum": [
+          "none",
+          "solid",
+          "gradient"
+        ],
+        "title": "ContentBackgroundKind"
       },
       "DnsRecord": {
         "properties": {
@@ -2154,6 +2288,12 @@
           "avatar_shape": {
             "$ref": "#/components/schemas/AvatarShape",
             "default": "circle"
+          },
+          "avatar_border": {
+            "$ref": "#/components/schemas/AvatarBorder"
+          },
+          "content_background": {
+            "$ref": "#/components/schemas/ContentBackground"
           }
         },
         "type": "object",

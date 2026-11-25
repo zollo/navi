@@ -6,9 +6,9 @@
   --border: #e1e3eb;
   --text: #16171d;
   --muted: #646877;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-soft: #eef0ff;
+  --primary: #6d28d9;
+  --primary-hover: #5b21b6;
+  --primary-soft: #f3ecff;
   --on-primary: #ffffff;
   --danger: #dc2626;
   --success: #15803d;
@@ -21,7 +21,7 @@
   /* Alerts */
   --alert-error-bg: #fee2e2;   --alert-error-fg: #991b1b;
   --alert-success-bg: #dcfce7; --alert-success-fg: #14532d;
-  --alert-info-bg: #e0e7ff;    --alert-info-fg: #312e81;
+  --alert-info-bg: #ede9fe;    --alert-info-fg: #4c1d95;
 
   --nav-h: 56px;
   --tabbar-h: 62px;
@@ -36,10 +36,10 @@
   --border: #2a2d3b;
   --text: #e8e9f0;
   --muted: #9a9db0;
-  --primary: #a5b4fc;
-  --primary-hover: #c7d2fe;
-  --primary-soft: rgba(165, 180, 252, 0.14);
-  --on-primary: #11132a;
+  --primary: #c4b5fd;
+  --primary-hover: #ddd6fe;
+  --primary-soft: rgba(196, 181, 253, 0.14);
+  --on-primary: #1c0f3a;
   --danger: #f87171;
   --success: #4ade80;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -48,7 +48,7 @@
   --card-hover: #232736;
   --alert-error-bg: rgba(239, 68, 68, 0.14);    --alert-error-fg: #fca5a5;
   --alert-success-bg: rgba(34, 197, 94, 0.14);  --alert-success-fg: #86efac;
-  --alert-info-bg: rgba(99, 102, 241, 0.16);    --alert-info-fg: #c7d2fe;
+  --alert-info-bg: rgba(139, 92, 246, 0.16);    --alert-info-fg: #ddd6fe;
   color-scheme: dark;
 }
 
@@ -61,10 +61,10 @@
     --border: #2a2d3b;
     --text: #e8e9f0;
     --muted: #9a9db0;
-    --primary: #a5b4fc;
-    --primary-hover: #c7d2fe;
-    --primary-soft: rgba(165, 180, 252, 0.14);
-    --on-primary: #11132a;
+    --primary: #c4b5fd;
+    --primary-hover: #ddd6fe;
+    --primary-soft: rgba(196, 181, 253, 0.14);
+    --on-primary: #1c0f3a;
     --danger: #f87171;
     --success: #4ade80;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -73,7 +73,7 @@
     --card-hover: #232736;
     --alert-error-bg: rgba(239, 68, 68, 0.14);    --alert-error-fg: #fca5a5;
     --alert-success-bg: rgba(34, 197, 94, 0.14);  --alert-success-fg: #86efac;
-    --alert-info-bg: rgba(99, 102, 241, 0.16);    --alert-info-fg: #c7d2fe;
+    --alert-info-bg: rgba(139, 92, 246, 0.16);    --alert-info-fg: #ddd6fe;
     color-scheme: dark;
   }
 }
@@ -120,6 +120,8 @@ a:hover { text-decoration: underline; }
 }
 .brand:hover { text-decoration: none; }
 .brand svg { flex: none; }
+/* The app-icon tile gets a soft violet glow where it stands on its own. */
+.landing .navi-logo { filter: drop-shadow(0 10px 24px rgba(109, 40, 217, 0.35)); }
 .app-nav .links { display: none; gap: 4px; }
 .app-nav .links a {
   padding: 8px 12px;
@@ -395,14 +397,35 @@ input:focus, select:focus, textarea:focus {
   background: var(--hover);
   font-size: 13px;
 }
+/* Optional content panel (theme content_background): behind the content, over
+   the page background, which shows through below full opacity. */
+.navi-shell.has-content { padding-left: 12px; padding-right: 12px; }
+.has-content .navi-page { margin-top: 12px; border-radius: 24px; }
+.has-content .navi-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--nv-content-bg);
+  opacity: var(--nv-content-opacity, 1);
+}
 .navi-head { text-align: center; margin: 12px 0 28px; text-shadow: var(--nv-text-shadow, none); }
+/* The ring around the photo (theme avatar_border); no padding when it's off. */
+.navi-avatar-ring {
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding: var(--nv-avatar-ring-width, 0);
+  background: var(--nv-avatar-ring, none);
+  border-radius: var(--nv-avatar-ring-radius, var(--nv-avatar-radius, 50%));
+}
 .navi-avatar {
   width: 96px;
   height: 96px;
   border-radius: var(--nv-avatar-radius, 50%);
   object-fit: cover;
   display: block;
-  margin: 0 auto 14px;
+  margin: 0;
   background: var(--card-bg);
 }
 .navi-avatar.placeholder {

@@ -16,6 +16,13 @@ THEME = {
     "button_color": "#ffffff",
     "button_text_color": "#111111",
     "avatar_shape": "rounded",
+    "avatar_border": {
+        "kind": "gradient",
+        "gradient_from": "#F58529",
+        "gradient_to": "#dd2a7b",
+        "width": 6,
+    },
+    "content_background": {"kind": "solid", "color": "#000000", "opacity": 40},
 }
 
 
@@ -26,6 +33,15 @@ def test_default_theme(client, alice):
     assert page["theme"]["text_color"] is None
     assert page["theme"]["button_shape"] == "rounded"
     assert page["background_url"] is None
+    assert page["theme"]["avatar_border"]["kind"] == "none"
+    assert page["theme"]["content_background"] == {
+        "kind": "none",
+        "color": None,
+        "gradient_from": None,
+        "gradient_to": None,
+        "gradient_angle": 180,
+        "opacity": 80,
+    }
 
 
 def test_save_and_read_theme(client, alice):
@@ -37,6 +53,10 @@ def test_save_and_read_theme(client, alice):
     assert theme["font"] == "playfair"
     assert theme["button_style"] == "glass"
     assert theme["avatar_shape"] == "rounded"
+    assert theme["avatar_border"]["gradient_from"] == "#f58529"
+    assert theme["avatar_border"]["width"] == 6
+    assert theme["content_background"]["kind"] == "solid"
+    assert theme["content_background"]["opacity"] == 40
 
     # Saving without a theme resets the look, like every other omitted field.
     client.put("/api/pages/me", headers=alice, json=PAGE)
@@ -55,6 +75,16 @@ def test_theme_validation(client, alice):
         {"background": {"kind": "solid", "color": "#000000", "gradient_angle": 361}},
         {"background": {"kind": "curated"}},
         {"background": {"kind": "video"}},
+        {"avatar_border": {"kind": "solid"}},
+        {"avatar_border": {"kind": "gradient", "gradient_from": "#000000"}},
+        {"avatar_border": {"kind": "solid", "color": "#000000", "width": 0}},
+        {"avatar_border": {"kind": "solid", "color": "#000000", "width": 17}},
+        {"avatar_border": {"kind": "dotted"}},
+        {"content_background": {"kind": "solid"}},
+        {"content_background": {"kind": "gradient", "gradient_to": "#000000"}},
+        {"content_background": {"kind": "solid", "color": "#000000", "opacity": 101}},
+        {"content_background": {"kind": "solid", "color": "#000000", "opacity": -1}},
+        {"content_background": {"kind": "image"}},
     ]
     for theme in bad:
         resp = client.put("/api/pages/me", headers=alice, json={**PAGE, "theme": theme})

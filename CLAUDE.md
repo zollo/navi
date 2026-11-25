@@ -20,7 +20,7 @@ pytest -q                                        # SQLite; no services needed
 NAVI_TEST_DATABASE_URL=postgresql+asyncpg://navi:navi@localhost:5432/navi pytest -q   # same suite on Postgres
 pytest tests/test_pages.py::test_avatar
 alembic upgrade head && alembic check            # migrations apply and match the models
-python -m app.openapi_export ../docs/openapi.json   # or `make openapi`
+python -m app.openapi_export ../docs/openapi.json --mcp-tools ../docs/mcp-tools.json   # or `make openapi`
 uvicorn app.main:app --reload
 ```
 
@@ -36,7 +36,7 @@ npm test             # vitest
 
 **Services:** `backend` (FastAPI, REST at `/api`), `frontend` (React/Vite SPA served by nginx), Postgres. No queue/worker.
 
-**Service layer.** `app/services/*` hold all logic and permission checks and raise `core/errors.NaviError` subclasses; routes (`app/api/routes/*`) stay thin and an exception handler in `main.py` maps errors to HTTP. `docs/openapi.json` is the published contract (CI fails if stale; `make openapi`).
+**Service layer.** `app/services/*` hold all logic and permission checks and raise `core/errors.NaviError` subclasses; routes (`app/api/routes/*`) stay thin and an exception handler in `main.py` maps errors to HTTP. `docs/openapi.json` and `docs/mcp-tools.json` are the published contract (CI fails if stale; `make openapi`).
 
 **Data model** (`models/page.py`): `users` 1–0..1 `pages` (unique `user_id`, unique lowercase `handle`) → ordered `social_links` (icon + url) and ordered `sections` (optional title) → ordered `links` (title, url, icon). Order is an integer `position`. `backgrounds` (`models/background.py`) is the admin-curated gallery; `pages.background_id` points at the picked one (`ON DELETE SET NULL`, also cleared by hand for SQLite).
 
@@ -58,9 +58,11 @@ npm test             # vitest
 
 **Custom domains** (`services/domain_service.py`, `domain_sync.py`, `CUSTOM_DOMAINS_*`, off by default): one per page (`custom_domains`). The owner adds TXT `_navi-challenge.<host>` = `navi-verify=<token>` plus a CNAME (or A, apex) to `CUSTOM_DOMAIN_TARGET`; DNS is checked through public resolvers (`CUSTOM_DOMAIN_RESOLVERS`) by `POST /api/domains/me/verify` or the sync job. Several pages may claim a hostname; only one can verify it (partial unique index). Verified domains are re-checked every 6h and switched off after 4 failures in a row. `GET /api/domains/lookup?domain=` → handle (also usable as an on-demand-TLS "ask" URL); the SPA calls it at boot when the host isn't known to be Navi's own (`lib/site.ts`, cached a day) and then renders only that page. `python -m app.domain_sync` (chart CronJob) runs the checks and keeps one Ingress per verified domain (server-side apply via the service account; labels `navi.zollo.net/custom-domain`, `navi.zollo.net/instance`, never `app.kubernetes.io/instance`), routing only `/api/pages`, `/api/backgrounds`, `/api/domains/lookup` and the SPA. TLS comes from the Ingress annotations (cert-manager HTTP-01 issuer). Tests fake DNS via `domain_service.dns_client`.
 
-**Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
+**Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up. **API keys** (`models/api_key.py`, `services/api_key_service.py`, `/api/api-keys`): `navi_` + random, SHA-256 at rest, shown once; `user_service.resolve_token` accepts them anywhere a session token works. Routes that must not accept a key (key management, password change) use `deps.get_session_user`.
 
-**Frontend:** `components/PageView.tsx` renders a page and is shared by the public route (`pages/PublicPage.tsx`) and the editor's live preview (`pages/Editor.tsx`). The SPA calls relative `/api`; nginx proxies `/api`, `/docs`, `/redoc`, `/openapi.json` to `backend:8000` via Docker's resolver so nginx boots even when the backend is down. In k8s the ingress routes those paths instead. In Vite dev the API is cross-origin, so image URLs are prefixed with `api.baseUrl`. Mobile-first CSS: bottom tab bar under 760px, 44px touch targets, 16px inputs.
+**MCP server** (`app/mcp_server.py`, mounted at `/mcp` in `main.py`, streamable HTTP, stateless JSON): tools are **generated from `app.openapi()`**, one per `operationId` (path/query params + the JSON body's fields flattened into arguments; multipart file fields become base64 strings; refs → `$defs`), and a call runs the real route in-process via `httpx2.ASGITransport` with the caller's bearer. So a new route is a new tool with no extra code; give it an `operation_id` and a docstring (the tool description). Anything that shouldn't be a tool goes in `EXCLUDED` with a reason. `/api/admin/*` tools are listed only to admins. Auth is checked up front (401 + `WWW-Authenticate`); `?key=` is accepted for URL-only clients (nginx logs `/mcp` without the query). `docs/mcp-tools.json` is the published tool list (`make openapi`; CI and `tests/test_mcp.py` fail if stale). The SPA's setup page is `pages/Integrations.tsx` at `/integrations` (snippets in `lib/mcp.ts`).
+
+**Frontend:** `components/PageView.tsx` renders a page and is shared by the public route (`pages/PublicPage.tsx`) and the editor's live preview (`pages/Editor.tsx`). The SPA calls relative `/api`; nginx proxies `/api`, `/mcp`, `/docs`, `/redoc`, `/openapi.json` to `backend:8000` via Docker's resolver so nginx boots even when the backend is down. In k8s the ingress routes those paths instead. In Vite dev the API is cross-origin, so image URLs are prefixed with `api.baseUrl`. Mobile-first CSS: bottom tab bar under 760px, 44px touch targets, 16px inputs.
 
 **Branding:** the logo is a raster cut from Joe's artwork (purple rounded square, star + chain link; transparent outside the rounded corners): `public/icons/logo-256.png` (used by `components/Logo.tsx`), `favicon.ico`, `apple-touch-icon.png` (full-bleed), 192/512 + maskable PWA icons and `site.webmanifest`. Brand purples are `--brand-gradient` / `--primary` in `index.css` (primary buttons and the wordmark use the gradient).
 
@@ -79,7 +81,7 @@ npm test             # vitest
 
 ## CI, releases & conventions
 
-`.github/workflows/ci.yml`: backend (ruff, pytest on SQLite, `docs/` drift check), backend-postgres (migrations + `alembic check` + pytest on Postgres), frontend (build + vitest), smoke (base compose boots the whole stack; checks health, the nginx proxy, SPA fallback for `/<handle>`, `/openapi.json`), chart-lint. **Only on push to `main`:** `version` computes the next semver (seeded at `v1.0.0`; `mathieudutour/github-tag-action` thereafter) and creates a GitHub release; `api-spec` attaches the versioned OpenAPI spec; `images` builds both images tagged `latest`/`X.Y.Z`/`X.Y`/`sha-<short>`, signs them with cosign and attests provenance; `chart` publishes the Helm chart.
+`.github/workflows/ci.yml`: backend (ruff, pytest on SQLite, `docs/` drift check), backend-postgres (migrations + `alembic check` + pytest on Postgres), frontend (build + vitest), smoke (base compose boots the whole stack; checks health, the nginx proxy, SPA fallback for `/<handle>`, `/openapi.json`, MCP 401), chart-lint. **Only on push to `main`:** `version` computes the next semver (seeded at `v1.0.0`; `mathieudutour/github-tag-action` thereafter) and creates a GitHub release; `api-spec` attaches the versioned OpenAPI spec and MCP tool list; `images` builds both images tagged `latest`/`X.Y.Z`/`X.Y`/`sha-<short>`, signs them with cosign and attests provenance; `chart` publishes the Helm chart.
 
 The repo is **squash-merge only**, with the squash commit title = PR title. The PR title drives the version bump and must be a Conventional Commit (enforced by `.github/workflows/pr-title.yml`): `feat:` → minor, `fix:`/other types → patch, `!` or a `BREAKING CHANGE` footer → major. See `CONTRIBUTING.md`.
 

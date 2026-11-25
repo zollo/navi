@@ -43,8 +43,8 @@ backend-test: ## Run backend tests
 	$(COMPOSE) exec backend pytest -q
 
 .PHONY: openapi
-openapi: ## Regenerate docs/openapi.json
-	cd backend && python -m app.openapi_export ../docs/openapi.json
+openapi: ## Regenerate docs/openapi.json and docs/mcp-tools.json
+	cd backend && python -m app.openapi_export ../docs/openapi.json --mcp-tools ../docs/mcp-tools.json
 
 .PHONY: backend-lint
 backend-lint: ## Lint + format-check the backend

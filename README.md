@@ -61,6 +61,14 @@ everywhere. You run it yourself, so your page and your data stay on your server.
   records and click verify. Verified domains can be re-checked on a schedule
   and switched off if the DNS goes away.
 
+**Works with your AI assistant**
+- Create an API key under **AI tools** and connect Claude (Code, desktop or
+  claude.ai), GitHub Copilot in VS Code, Cursor or any MCP client, with
+  copy-paste setup and one-click install links. Then just ask: “add my new
+  podcast under a Listen section”.
+- The MCP server is generated from the REST API, so every new API feature shows
+  up as a tool automatically.
+
 **Safe by default**
 - Links must be `https://`, `http://` or `mailto:`, and open with
   `rel="noopener noreferrer nofollow"`.
@@ -132,7 +140,8 @@ helm install navi oci://ghcr.io/zollo/charts/navi --version <release> \
 ```
 
 The chart runs database migrations on start and scales the backend
-horizontally. With `customDomains.enabled` it adds a CronJob that verifies
+horizontally. Its Ingress sends `/api`, `/mcp`, `/docs`, `/redoc` and
+`/openapi.json` to the backend. With `customDomains.enabled` it adds a CronJob that verifies
 custom domains and creates an Ingress for each verified one. For HTTPS on
 those, set `customDomains.ingress.annotations` to a cert-manager issuer with an
 HTTP-01 solver (e.g. `cert-manager.io/cluster-issuer: letsencrypt-http01`). See [`charts/navi/values.yaml`](charts/navi/values.yaml) for
@@ -169,11 +178,32 @@ To revoke, first remove the address from `ADMIN_EMAILS` and restart the
 backend (otherwise the next sign-in grants it again), then run the same command
 with `--revoke`.
 
-## API
+## API and MCP
 
 Everything the web app does goes through a REST API under `/api`. Interactive
 docs are served at `/docs`, and the OpenAPI spec is in
 [`docs/openapi.json`](docs/openapi.json) and attached to each release.
+
+The same operations are an [MCP](https://modelcontextprotocol.io) server at
+`/mcp` (streamable HTTP). Each tool is a REST operation, named after its
+`operationId`, generated from the OpenAPI schema at startup, and calling it runs
+that route. The tool list is published in
+[`docs/mcp-tools.json`](docs/mcp-tools.json); CI fails if it's out of date.
+
+Authenticate scripts and AI tools with a personal API key (`navi_…`, created
+under **AI tools** in the app): send `Authorization: Bearer <key>`. Clients
+that only take a URL, like claude.ai connectors, can use `/mcp?key=<key>`
+instead. Keys are stored hashed, shown once, and can't create more keys or
+change your password.
+
+```bash
+claude mcp add --transport http navi https://navi.example.com/mcp \
+  --header "Authorization: Bearer navi_…"
+```
+
+<p align="center">
+  <img src="docs/images/ai-tools.png" alt="The AI tools page: API keys and setup for Claude, VS Code, Cursor" width="720">
+</p>
 
 ## Development
 

@@ -42,7 +42,10 @@ def test_reserved_handles_cover_spa_routes():
     """Every top-level SPA/nginx path must be reserved, or a page could shadow it."""
     from app.services.page_service import RESERVED_HANDLES
 
-    for route in ("login", "register", "edit", "account", "api", "docs", "redoc", "assets"):
+    for route in (
+        "login", "register", "edit", "account", "integrations", "api", "mcp", "docs", "redoc",
+        "assets",
+    ):
         assert route in RESERVED_HANDLES
     # Fixed routes under /api/pages/ that a handle would collide with.
     for route in ("me", "icons", "handles"):

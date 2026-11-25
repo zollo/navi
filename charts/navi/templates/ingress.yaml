@@ -23,7 +23,7 @@ spec:
     - host: {{ . | quote }}
       http:
         paths:
-          {{- range list "/api" "/docs" "/redoc" "/openapi.json" }}
+          {{- range list "/api" "/mcp" "/docs" "/redoc" "/openapi.json" }}
           - path: {{ . }}
             pathType: Prefix
             backend:

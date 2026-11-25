@@ -1,0 +1,5301 @@
+{
+  "server": "navi",
+  "transport": "streamable-http",
+  "path": "/mcp",
+  "auth": "Authorization: Bearer <API key>",
+  "generated_from": "openapi.json (one tool per operationId)",
+  "excluded_operations": {
+    "auth_config": "Only tells the sign-in page what to render.",
+    "create_api_key": "API keys can't manage API keys.",
+    "get_avatar": "Returns image bytes; page data carries the avatar URL.",
+    "get_background_image": "Returns image bytes; the gallery carries the image URLs.",
+    "get_page_background": "Returns image bytes; page data carries the image URL.",
+    "health": "Infrastructure probe.",
+    "list_api_keys": "API keys can't manage API keys.",
+    "login": "MCP clients authenticate with an API key.",
+    "lookup_domain": "Used by the SPA and the TLS issuer on custom domains.",
+    "readiness": "Infrastructure probe.",
+    "register": "MCP clients authenticate with an API key.",
+    "revoke_api_key": "API keys can't manage API keys.",
+    "update_me": "Changing the password needs a password sign-in, not an API key."
+  },
+  "tools": [
+    {
+      "name": "build_info",
+      "title": "Build Info",
+      "description": "Current build plus the URLs integrations need. Requires authentication.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "git_commit": {
+            "type": "string",
+            "title": "Git Commit"
+          },
+          "build_time": {
+            "type": "string",
+            "title": "Build Time"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "public_url": {
+            "type": "string",
+            "title": "Public Url"
+          },
+          "api_docs_url": {
+            "type": "string",
+            "title": "Api Docs Url"
+          },
+          "openapi_url": {
+            "type": "string",
+            "title": "Openapi Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "git_commit",
+          "build_time",
+          "environment",
+          "public_url",
+          "api_docs_url",
+          "openapi_url"
+        ],
+        "title": "BuildInfo"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "check_handle",
+      "title": "Check Handle",
+      "description": "Whether a handle can be used for a page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          }
+        },
+        "required": [
+          "handle"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "available"
+        ],
+        "title": "HandleCheck"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "create_background",
+      "title": "Create Background",
+      "description": "Add a background to the gallery (admins; multipart `file`, `name`, `dark`).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name"
+          },
+          "dark": {
+            "type": "boolean",
+            "title": "Dark",
+            "default": true
+          },
+          "file": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "title": "File",
+            "description": "The image file, base64-encoded (PNG, JPEG, WebP or GIF)."
+          }
+        },
+        "required": [
+          "name",
+          "file"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "dark": {
+            "type": "boolean",
+            "title": "Dark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "image_url",
+          "dark"
+        ],
+        "title": "BackgroundRead"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_background",
+      "title": "Delete Background",
+      "description": "Remove a background from the gallery (admins). Pages using it fall back to\ntheir background color.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "background_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Background Id"
+          }
+        },
+        "required": [
+          "background_id"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_my_avatar",
+      "title": "Delete My Avatar",
+      "description": "Remove your avatar.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_my_background",
+      "title": "Delete My Background",
+      "description": "Remove your background image. A page showing it falls back to its color.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_my_domain",
+      "title": "Delete My Domain",
+      "description": "Disconnect your custom domain. Your page stays at /<handle>.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "delete_my_page",
+      "title": "Delete My Page",
+      "description": "Delete your page. Your account stays, and you can create a new page later.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_domain_config",
+      "title": "Get Domain Config",
+      "description": "Whether custom domains are offered, and the CNAME/A targets to point them at.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "cname_target": {
+            "type": "string",
+            "title": "Cname Target"
+          },
+          "ips": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ips"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "cname_target",
+          "ips"
+        ],
+        "title": "DomainConfig",
+        "description": "Whether this server offers custom domains, and where to point them."
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_my_domain",
+      "title": "Get My Domain",
+      "description": "Your page's custom domain and the DNS records it needs, or 404 if none.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/$defs/DnsRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "status",
+          "url",
+          "records",
+          "verified_at",
+          "last_checked_at",
+          "last_error",
+          "created_at"
+        ],
+        "title": "DomainRead",
+        "$defs": {
+          "DnsRecord": {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TXT",
+                  "CNAME",
+                  "A"
+                ],
+                "title": "Type"
+              },
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "value": {
+                "type": "string",
+                "title": "Value"
+              },
+              "purpose": {
+                "type": "string",
+                "title": "Purpose"
+              }
+            },
+            "type": "object",
+            "required": [
+              "type",
+              "name",
+              "value",
+              "purpose"
+            ],
+            "title": "DnsRecord",
+            "description": "A record the owner adds at their DNS provider."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_my_page",
+      "title": "Get My Page",
+      "description": "Your page, or 404 if you haven't created it yet.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "get_page",
+      "title": "Get Page",
+      "description": "A public page by handle (no authentication).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          }
+        },
+        "required": [
+          "handle"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "import_linktree",
+      "title": "Import Linktree",
+      "description": "Read a public Linktree page and return it as a draft Navi page.\n\nNothing is saved. Load the draft into the editor, then save it with\n`PUT /api/pages/me` (and the avatar with `PUT /api/pages/me/avatar`).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "include_avatar": {
+            "type": "boolean",
+            "title": "Include Avatar",
+            "default": true
+          }
+        },
+        "required": [
+          "source"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkIn"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionIn"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "avatar_data_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Data Url"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_url",
+          "title",
+          "tagline",
+          "socials",
+          "sections"
+        ],
+        "title": "PageImport",
+        "description": "A draft page built from someone's Linktree. Nothing is saved: the editor loads\nit so the user can review it, then saves it with `PUT /api/pages/me`.",
+        "$defs": {
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkIn": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1,
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon",
+                "default": "link"
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "url"
+            ],
+            "title": "LinkIn"
+          },
+          "SectionIn": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 80,
+                "title": "Title",
+                "default": ""
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkIn"
+                },
+                "type": "array",
+                "maxItems": 50,
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "title": "SectionIn"
+          },
+          "SocialLinkIn": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1,
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkIn"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_backgrounds",
+      "title": "List Backgrounds",
+      "description": "The curated backgrounds anyone can pick for their page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "backgrounds": {
+            "items": {
+              "$ref": "#/$defs/BackgroundRead"
+            },
+            "type": "array",
+            "title": "Backgrounds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backgrounds"
+        ],
+        "title": "BackgroundList",
+        "$defs": {
+          "BackgroundRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "image_url": {
+                "type": "string",
+                "title": "Image Url"
+              },
+              "dark": {
+                "type": "boolean",
+                "title": "Dark"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "image_url",
+              "dark"
+            ],
+            "title": "BackgroundRead"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "list_icons",
+      "title": "List Icons",
+      "description": "Icon names accepted for social icons and links.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "icons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Icons"
+          }
+        },
+        "type": "object",
+        "required": [
+          "icons"
+        ],
+        "title": "IconList"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "public_config",
+      "title": "Public Config",
+      "description": "Upload limits for clients, such as the largest avatar the API accepts. Public.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "max_avatar_kb": {
+            "type": "integer",
+            "title": "Max Avatar Kb"
+          },
+          "avatar_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Avatar Types"
+          },
+          "max_background_kb": {
+            "type": "integer",
+            "title": "Max Background Kb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "max_avatar_kb",
+          "avatar_types",
+          "max_background_kb"
+        ],
+        "title": "PublicConfig",
+        "description": "Limits the SPA needs before it talks to the API (no auth)."
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "save_my_page",
+      "title": "Save My Page",
+      "description": "Create your page, or replace its handle, header, social icons and sections.\n\nSend the whole page: sections and links not in the request are removed, and list\norder is display order.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 3,
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Title",
+            "default": ""
+          },
+          "tagline": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Tagline",
+            "default": ""
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkIn"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionIn"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          }
+        },
+        "required": [
+          "handle"
+        ],
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkIn": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1,
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1,
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon",
+                "default": "link"
+              }
+            },
+            "type": "object",
+            "required": [
+              "title",
+              "url"
+            ],
+            "title": "LinkIn"
+          },
+          "SectionIn": {
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 80,
+                "title": "Title",
+                "default": ""
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkIn"
+                },
+                "type": "array",
+                "maxItems": 50,
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "title": "SectionIn"
+          },
+          "SocialLinkIn": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "maxLength": 2048,
+                "minLength": 1,
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkIn"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "set_my_domain",
+      "title": "Set My Domain",
+      "description": "Connect a domain to your page, replacing any previous one.\n\nThe domain starts out pending: add the returned DNS records, then verify. It's\nchecked automatically every few minutes for a week, too.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Hostname"
+          }
+        },
+        "required": [
+          "hostname"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/$defs/DnsRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "status",
+          "url",
+          "records",
+          "verified_at",
+          "last_checked_at",
+          "last_error",
+          "created_at"
+        ],
+        "title": "DomainRead",
+        "$defs": {
+          "DnsRecord": {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TXT",
+                  "CNAME",
+                  "A"
+                ],
+                "title": "Type"
+              },
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "value": {
+                "type": "string",
+                "title": "Value"
+              },
+              "purpose": {
+                "type": "string",
+                "title": "Purpose"
+              }
+            },
+            "type": "object",
+            "required": [
+              "type",
+              "name",
+              "value",
+              "purpose"
+            ],
+            "title": "DnsRecord",
+            "description": "A record the owner adds at their DNS provider."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "update_background",
+      "title": "Update Background",
+      "description": "Rename a background or change whether it counts as dark (admins).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "background_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Background Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "dark": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dark"
+          }
+        },
+        "required": [
+          "background_id"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "dark": {
+            "type": "boolean",
+            "title": "Dark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "image_url",
+          "dark"
+        ],
+        "title": "BackgroundRead"
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "upload_my_avatar",
+      "title": "Upload My Avatar",
+      "description": "Upload a PNG, JPEG, WebP or GIF avatar (multipart `file`).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "title": "File",
+            "description": "The image file, base64-encoded (PNG, JPEG, WebP or GIF)."
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "upload_my_background",
+      "title": "Upload My Background",
+      "description": "Upload a PNG, JPEG, WebP or GIF background image (multipart `file`).\n\nIt shows once the page is saved with `theme.background.kind` = `image`.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentEncoding": "base64",
+            "title": "File",
+            "description": "The image file, base64-encoded (PNG, JPEG, WebP or GIF)."
+          }
+        },
+        "required": [
+          "file"
+        ]
+      },
+      "outputSchema": {
+        "properties": {
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline"
+          },
+          "avatar_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar Url"
+          },
+          "socials": {
+            "items": {
+              "$ref": "#/$defs/SocialLinkRead"
+            },
+            "type": "array",
+            "title": "Socials"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/$defs/SectionRead"
+            },
+            "type": "array",
+            "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/$defs/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "handle",
+          "title",
+          "tagline",
+          "avatar_url",
+          "socials",
+          "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
+          "updated_at"
+        ],
+        "title": "PageRead",
+        "description": "A page as anyone sees it at /<handle>.",
+        "$defs": {
+          "AvatarBorder": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/AvatarBorderKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 135
+              },
+              "width": {
+                "type": "integer",
+                "maximum": 16.0,
+                "minimum": 1.0,
+                "title": "Width",
+                "default": 4
+              }
+            },
+            "type": "object",
+            "title": "AvatarBorder",
+            "description": "A ring around the profile photo, in one color or a gradient."
+          },
+          "AvatarBorderKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "AvatarBorderKind"
+          },
+          "AvatarShape": {
+            "type": "string",
+            "enum": [
+              "circle",
+              "rounded",
+              "square"
+            ],
+            "title": "AvatarShape"
+          },
+          "BackgroundKind": {
+            "type": "string",
+            "enum": [
+              "default",
+              "solid",
+              "gradient",
+              "image",
+              "curated"
+            ],
+            "title": "BackgroundKind"
+          },
+          "ButtonShape": {
+            "type": "string",
+            "enum": [
+              "square",
+              "rounded",
+              "pill"
+            ],
+            "title": "ButtonShape"
+          },
+          "ButtonStyle": {
+            "type": "string",
+            "enum": [
+              "filled",
+              "outline",
+              "glass",
+              "shadow"
+            ],
+            "title": "ButtonStyle"
+          },
+          "ContentBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/ContentBackgroundKind",
+                "default": "none"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "opacity": {
+                "type": "integer",
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "title": "Opacity",
+                "default": 80
+              }
+            },
+            "type": "object",
+            "title": "ContentBackground",
+            "description": "A panel behind the avatar, text and links, separate from the page\nbackground. Below full opacity the page background shows through."
+          },
+          "ContentBackgroundKind": {
+            "type": "string",
+            "enum": [
+              "none",
+              "solid",
+              "gradient"
+            ],
+            "title": "ContentBackgroundKind"
+          },
+          "Font": {
+            "type": "string",
+            "enum": [
+              "system",
+              "inter",
+              "nunito",
+              "lora",
+              "playfair",
+              "space-mono",
+              "caveat"
+            ],
+            "title": "Font"
+          },
+          "Icon": {
+            "type": "string",
+            "enum": [
+              "link",
+              "website",
+              "email",
+              "video",
+              "music",
+              "podcast",
+              "blog",
+              "shop",
+              "calendar",
+              "instagram",
+              "threads",
+              "x",
+              "twitter",
+              "tiktok",
+              "linkedin",
+              "github",
+              "youtube",
+              "facebook",
+              "twitch",
+              "discord",
+              "signal",
+              "whatsapp",
+              "telegram",
+              "mastodon",
+              "bluesky",
+              "reddit",
+              "spotify"
+            ],
+            "title": "Icon",
+            "description": "Icons for social buttons and link cards. Stored as VARCHAR: adding one needs\nno migration, only the enum value and an entry in the frontend's `lib/icons.tsx`."
+          },
+          "LinkRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              },
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "url",
+              "icon"
+            ],
+            "title": "LinkRead"
+          },
+          "SectionRead": {
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Id"
+              },
+              "title": {
+                "type": "string",
+                "title": "Title"
+              },
+              "links": {
+                "items": {
+                  "$ref": "#/$defs/LinkRead"
+                },
+                "type": "array",
+                "title": "Links"
+              }
+            },
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "links"
+            ],
+            "title": "SectionRead"
+          },
+          "SocialLinkRead": {
+            "properties": {
+              "icon": {
+                "$ref": "#/$defs/Icon"
+              },
+              "url": {
+                "type": "string",
+                "title": "Url"
+              }
+            },
+            "type": "object",
+            "required": [
+              "icon",
+              "url"
+            ],
+            "title": "SocialLinkRead"
+          },
+          "Theme": {
+            "properties": {
+              "background": {
+                "$ref": "#/$defs/ThemeBackground"
+              },
+              "font": {
+                "$ref": "#/$defs/Font",
+                "default": "system"
+              },
+              "text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Text Color"
+              },
+              "button_style": {
+                "$ref": "#/$defs/ButtonStyle",
+                "default": "filled"
+              },
+              "button_shape": {
+                "$ref": "#/$defs/ButtonShape",
+                "default": "rounded"
+              },
+              "button_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Color"
+              },
+              "button_text_color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Button Text Color"
+              },
+              "avatar_shape": {
+                "$ref": "#/$defs/AvatarShape",
+                "default": "circle"
+              },
+              "avatar_border": {
+                "$ref": "#/$defs/AvatarBorder"
+              },
+              "content_background": {
+                "$ref": "#/$defs/ContentBackground"
+              }
+            },
+            "type": "object",
+            "title": "Theme"
+          },
+          "ThemeBackground": {
+            "properties": {
+              "kind": {
+                "$ref": "#/$defs/BackgroundKind",
+                "default": "default"
+              },
+              "color": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Color"
+              },
+              "gradient_from": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient From"
+              },
+              "gradient_to": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Gradient To"
+              },
+              "gradient_angle": {
+                "type": "integer",
+                "maximum": 360.0,
+                "minimum": 0.0,
+                "title": "Gradient Angle",
+                "default": 180
+              },
+              "curated_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Curated Id"
+              },
+              "image_dark": {
+                "type": "boolean",
+                "title": "Image Dark",
+                "default": true
+              }
+            },
+            "type": "object",
+            "title": "ThemeBackground"
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "verify_my_domain",
+      "title": "Verify My Domain",
+      "description": "Check your domain's DNS records now.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "active"
+            ],
+            "title": "Status"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "records": {
+            "items": {
+              "$ref": "#/$defs/DnsRecord"
+            },
+            "type": "array",
+            "title": "Records"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "status",
+          "url",
+          "records",
+          "verified_at",
+          "last_checked_at",
+          "last_error",
+          "created_at"
+        ],
+        "title": "DomainRead",
+        "$defs": {
+          "DnsRecord": {
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "TXT",
+                  "CNAME",
+                  "A"
+                ],
+                "title": "Type"
+              },
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "value": {
+                "type": "string",
+                "title": "Value"
+              },
+              "purpose": {
+                "type": "string",
+                "title": "Purpose"
+              }
+            },
+            "type": "object",
+            "required": [
+              "type",
+              "name",
+              "value",
+              "purpose"
+            ],
+            "title": "DnsRecord",
+            "description": "A record the owner adds at their DNS provider."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      }
+    },
+    {
+      "name": "whoami",
+      "title": "Me",
+      "description": "The authenticated user.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "display_name",
+          "is_active",
+          "is_admin",
+          "created_at"
+        ],
+        "title": "UserRead"
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_session_user
 from app.config import settings
 from app.core.security import create_access_token
 from app.db import get_db
@@ -59,10 +59,10 @@ async def me(user: User = Depends(get_current_user)) -> User:
 @router.patch("/me", response_model=UserRead, operation_id="update_me")
 async def update_me(
     payload: UserUpdate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_session_user),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    """Change your display name or password."""
+    """Change your display name or password. Needs a password sign-in, not an API key."""
     return await user_service.update_user(
         db, user, display_name=payload.display_name, password=payload.password
     )

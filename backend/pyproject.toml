@@ -20,6 +20,8 @@ dependencies = [
     "httpx2==2.16.2",
     # Custom domains: DNS verification.
     "dnspython==2.9.2",
+    # MCP server (streamable HTTP) at /mcp, generated from the OpenAPI schema.
+    "mcp==2.3.0",
 ]
 
 [project.optional-dependencies]

@@ -11,8 +11,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.errors import Conflict, NotFound
-from app.core.security import decode_access_token, hash_password, verify_password
+from app.core.security import decode_access_token, hash_password, is_api_key, verify_password
 from app.models.user import User
+from app.services import api_key_service
 
 
 async def get_by_email(db: AsyncSession, email: str) -> User | None:
@@ -82,7 +83,10 @@ async def update_user(
 
 
 async def resolve_token(db: AsyncSession, token: str) -> User | None:
-    """Return the active user behind a session JWT."""
+    """Return the active user behind a session JWT or a personal API key."""
+    if is_api_key(token):
+        user = await api_key_service.resolve_key(db, token)
+        return await _grant_configured_admin(db, user) if user else None
     try:
         payload = decode_access_token(token)
         user_id = uuid.UUID(str(payload.get("sub")))

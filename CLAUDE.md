@@ -50,7 +50,7 @@ npm test             # vitest
 
 **Linktree import** (`services/linktree_service.py`): `POST /api/import/linktree` fetches a public `linktr.ee/<name>` page, reads its Next.js `__NEXT_DATA__` JSON (`pageProps.links` with `GROUP`/`HEADER` → sections, `socialLinks` → icons) and returns a draft page plus the avatar as a data: URL; nothing is saved until the editor does `PUT /api/pages/me` (+ avatar upload). It only ever fetches linktr.ee hosts (redirects re-checked), caps sizes, and maps link icons with `services/icons.guess_icon`, which mirrors the frontend's `guessIcon`. `LINKTREE_IMPORT_ENABLED` turns it off. Tests mock linktr.ee via `linktree_service.transport`.
 
-**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached.
+**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. The editor never uploads the picked file directly: `components/AvatarEditor.tsx` (crop/zoom/rotate/flip on a canvas) re-encodes it as a ≤512px square WebP (JPEG where the browser can't encode WebP), stepping quality then size down (`lib/avatar.ts`) until it fits under `max_avatar_kb` from the public `GET /api/config`. So any image the browser can decode works (HEIC on Safari, AVIF), and animated GIFs become stills.
 
 **Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
 
@@ -65,7 +65,7 @@ npm test             # vitest
 - Don't annotate 204 routes with `-> None`; return `Response(status_code=204)`.
 - bcrypt ≥ 5 raises on passwords > 72 bytes; `core/security.py` truncates explicitly.
 - SQLAlchemy relationship forward refs stay quoted; ruff `UP037` is intentionally ignored.
-- Starlette's `TestClient` needs `httpx2` (dev dependency).
+- Starlette's `TestClient` needs `httpx2` (a runtime dependency, also used for the Linktree fetch).
 - **TypeScript:** import `type FormEvent` / `type ReactNode` / `type MouseEvent` from `react`; don't use the `React.*` namespace.
 - **Healthchecks:** frontend checks must hit `127.0.0.1`, not `localhost` (busybox wget tries `::1`; nginx listens IPv4-only).
 

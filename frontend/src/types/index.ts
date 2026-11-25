@@ -111,3 +111,9 @@ export interface PageImport {
   avatar_data_url: string | null;
   warnings: string[];
 }
+
+// What GET /api/config returns.
+export interface PublicConfig {
+  max_avatar_kb: number;
+  avatar_types: string[];
+}

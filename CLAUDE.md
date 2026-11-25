@@ -42,7 +42,7 @@ npm test             # vitest
 
 **Editing is whole-page.** `PUT /api/pages/me` creates or replaces the caller's page: handle, header, socials, theme and every section with its links, in display order. Children are replaced wholesale (delete-orphan), so there are no reorder/move endpoints. `GET /api/pages/{handle}` is public; `GET /api/pages/handles/{handle}` checks availability.
 
-**Handles** (`services/page_service.py`): `HANDLE_RE` (3–30 chars, `a-z0-9._-`, alphanumeric ends, no `..`) and `RESERVED_HANDLES`. Pages live at the top level of the SPA, so **every top-level SPA route or nginx path (including `public/` files like `favicon.svg`, `apple-touch-icon.png`) must be in `RESERVED_HANDLES`** (and in `frontend/src/lib/page.ts`, which mirrors it for instant feedback). `tests/test_app_smoke.py` checks the main ones.
+**Handles** (`services/page_service.py`): `HANDLE_RE` (3–30 chars, `a-z0-9._-`, alphanumeric ends, no `..`) and `RESERVED_HANDLES`. Pages live at the top level of the SPA, so **every top-level SPA route or nginx path (including `public/` files like `favicon.ico`, `apple-touch-icon.png`, `site.webmanifest`) must be in `RESERVED_HANDLES`** (and in `frontend/src/lib/page.ts`, which mirrors it for instant feedback). `tests/test_app_smoke.py` checks the main ones.
 
 **URLs** must start with `https://`, `http://` or `mailto:` (`schemas/page.py`), which blocks `javascript:`/`data:` links. Public links render with `rel="noopener noreferrer nofollow"`.
 
@@ -61,6 +61,8 @@ npm test             # vitest
 **Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
 
 **Frontend:** `components/PageView.tsx` renders a page and is shared by the public route (`pages/PublicPage.tsx`) and the editor's live preview (`pages/Editor.tsx`). The SPA calls relative `/api`; nginx proxies `/api`, `/docs`, `/redoc`, `/openapi.json` to `backend:8000` via Docker's resolver so nginx boots even when the backend is down. In k8s the ingress routes those paths instead. In Vite dev the API is cross-origin, so image URLs are prefixed with `api.baseUrl`. Mobile-first CSS: bottom tab bar under 760px, 44px touch targets, 16px inputs.
+
+**Branding:** the logo is a raster cut from Joe's artwork (purple rounded square, star + chain link; transparent outside the rounded corners): `public/icons/logo-256.png` (used by `components/Logo.tsx`), `favicon.ico`, `apple-touch-icon.png` (full-bleed), 192/512 + maskable PWA icons and `site.webmanifest`. Brand purples are `--brand-gradient` / `--primary` in `index.css` (primary buttons and the wordmark use the gradient).
 
 **Build info:** `APP_VERSION`/`GIT_COMMIT`/`BUILD_TIME` build-args are baked into both images (backend `NAVI_*` env, frontend `VITE_*`), surfaced by `GET /api/build-info` and the Account page. Keep these ARGs late in the Dockerfiles.
 

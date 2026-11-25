@@ -30,8 +30,8 @@ RESERVED_HANDLES = frozenset(
     {
         "about", "account", "admin", "api", "app", "apple-touch-icon.png", "assets", "auth",
         "dashboard",
-        "docs", "edit", "editor", "favicon.svg", "handles", "help", "home", "icons",
-        "index.html",
+        "docs", "edit", "editor", "favicon.ico", "favicon.svg", "handles", "help", "home",
+        "icons", "index.html", "site.webmanifest",
         "login", "logout", "me", "navi", "new", "openapi.json", "privacy", "redoc",
         "register", "root", "settings", "signin", "signup", "static", "support",
         "terms", "www",

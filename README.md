@@ -58,8 +58,8 @@ everywhere. You run it yourself, so your page and your data stay on your server.
 
 **Custom domains**
 - Show your page on your own domain, like `links.example.com`. Add two DNS
-  records, click verify, and Navi takes care of the rest. Domains are re-checked
-  regularly and switched off if the DNS goes away.
+  records and click verify. Verified domains can be re-checked on a schedule
+  and switched off if the DNS goes away.
 
 **Safe by default**
 - Links must be `https://`, `http://` or `mailto:`, and open with
@@ -76,21 +76,30 @@ Navi is a FastAPI backend, a React app served by nginx, and Postgres. Images are
 published to GHCR as `ghcr.io/zollo/navi-backend` and `ghcr.io/zollo/navi-frontend`
 for every release.
 
-### Docker Compose (quickest)
+### Docker Compose
+
+Configure first, then start. Postgres takes its password from `.env` on the
+very first start only, so set it before you bring the stack up.
 
 ```bash
 git clone https://github.com/zollo/navi.git && cd navi
-make up          # copies .env.example to .env if missing, then docker compose up --build
+cp .env.example .env        # then edit .env (see the table below)
+docker compose -f docker-compose.yml up -d --build
 ```
 
 Open http://localhost:8080, choose **Create your page**, and claim a handle.
 
-Before exposing it to the internet, edit `.env` and at least set:
+Pass `-f docker-compose.yml` for a real deployment: plain `docker compose up`
+(and `make up`) also loads `docker-compose.override.yml`, a development setup
+with hot reload that points the browser at `http://localhost:8000` and won't
+work behind a public hostname.
+
+Settings to review in `.env`:
 
 | Setting | What it does |
 |---|---|
 | `SECRET_KEY` | Signs sign-in sessions. Use a long random string (`openssl rand -hex 32`). |
-| `POSTGRES_PASSWORD` | Database password. Set it before the first start. |
+| `POSTGRES_PASSWORD` | Database password. Set it before the first start; changing it later doesn't change the existing database's password. |
 | `NAVI_PUBLIC_URL` | The address people use, e.g. `https://links.example.com`. Pages live at `<NAVI_PUBLIC_URL>/<handle>`. |
 | `ALLOW_REGISTRATION` | `false` stops new sign-ups once your own accounts exist. |
 | `ADMIN_EMAILS` | Comma-separated emails that become admins and can curate the background gallery. |
@@ -99,7 +108,8 @@ Before exposing it to the internet, edit `.env` and at least set:
 | `CUSTOM_DOMAINS_ENABLED` | Let users attach their own domains (see below). |
 
 Every option is documented in [`.env.example`](.env.example). The frontend
-proxies `/api` to the backend, so only one port needs to be published.
+proxies `/api` to the backend, so only one port needs to be published; put
+your own HTTPS reverse proxy in front of it.
 
 ### TrueNAS SCALE
 
@@ -109,14 +119,24 @@ images and keeps Postgres on a dataset you can snapshot. See its
 
 ### Kubernetes (Helm)
 
+The chart needs `SECRET_KEY` and `POSTGRES_PASSWORD`, either from a Secret you
+create or from `secrets` in your values:
+
 ```bash
-helm install navi oci://ghcr.io/zollo/charts/navi --version <release>
+kubectl create secret generic navi-secrets \
+  --from-literal=SECRET_KEY="$(openssl rand -hex 32)" \
+  --from-literal=POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+
+helm install navi oci://ghcr.io/zollo/charts/navi --version <release> \
+  --set existingSecret=navi-secrets
 ```
 
-The chart runs database migrations on start, scales the backend horizontally,
-and with `customDomains.enabled` adds a job that verifies custom domains and
-creates an Ingress (with TLS via cert-manager) for each one. See
-[`charts/navi/values.yaml`](charts/navi/values.yaml).
+The chart runs database migrations on start and scales the backend
+horizontally. With `customDomains.enabled` it adds a CronJob that verifies
+custom domains and creates an Ingress for each verified one. For HTTPS on
+those, set `customDomains.ingress.annotations` to a cert-manager issuer with an
+HTTP-01 solver (e.g. `cert-manager.io/cluster-issuer: letsencrypt-http01`). See [`charts/navi/values.yaml`](charts/navi/values.yaml) for
+every option.
 
 ### Custom domains
 
@@ -126,8 +146,15 @@ users should point at. A user then adds, for their domain:
 - a TXT record `_navi-challenge.<domain>` with the token shown in the editor, and
 - a CNAME to your target (or an A record to `CUSTOM_DOMAIN_IPS` for an apex domain).
 
-Navi verifies these over public DNS. Routing and TLS for verified domains are
-up to your reverse proxy, or automatic with the Helm chart.
+Navi verifies these over public DNS when the user clicks verify. Outside
+Kubernetes, two things are up to you:
+
+- **Re-checks:** schedule `python -m app.domain_sync` in the backend container
+  (for example every 6 hours from cron). It re-verifies domains and switches off
+  ones whose DNS has gone away. The Helm chart does this for you.
+- **Routing and TLS:** your reverse proxy must accept the verified hostnames and
+  get certificates for them. Proxies with on-demand TLS can ask
+  `/api/domains/lookup?domain=<host>` whether a hostname belongs to a page.
 
 ### Admins
 
@@ -135,8 +162,12 @@ Admins can manage the curated background gallery at `/admin`. Grant the role
 with `ADMIN_EMAILS`, or from the backend container:
 
 ```bash
-python -m app.manage admin you@example.com            # add --revoke to remove
+python -m app.manage admin you@example.com
 ```
+
+To revoke, first remove the address from `ADMIN_EMAILS` and restart the
+backend (otherwise the next sign-in grants it again), then run the same command
+with `--revoke`.
 
 ## API
 

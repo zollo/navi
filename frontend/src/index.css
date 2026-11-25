@@ -8,7 +8,7 @@
   --muted: #646877;
   --primary: #6d28d9;
   --primary-hover: #5b21b6;
-  --primary-soft: #f3edff;
+  --primary-soft: #f3ecff;
   --on-primary: #ffffff;
   --danger: #dc2626;
   --success: #15803d;
@@ -23,7 +23,7 @@
   /* Alerts */
   --alert-error-bg: #fee2e2;   --alert-error-fg: #991b1b;
   --alert-success-bg: #dcfce7; --alert-success-fg: #14532d;
-  --alert-info-bg: #ede4ff;    --alert-info-fg: #3b0f7a;
+  --alert-info-bg: #ede9fe;    --alert-info-fg: #4c1d95;
 
   --nav-h: 56px;
   --tabbar-h: 62px;
@@ -41,7 +41,7 @@
   --primary: #c4b5fd;
   --primary-hover: #ddd6fe;
   --primary-soft: rgba(196, 181, 253, 0.14);
-  --on-primary: #1d0f3d;
+  --on-primary: #1c0f3a;
   --danger: #f87171;
   --success: #4ade80;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -66,7 +66,7 @@
     --primary: #c4b5fd;
     --primary-hover: #ddd6fe;
     --primary-soft: rgba(196, 181, 253, 0.14);
-    --on-primary: #1d0f3d;
+    --on-primary: #1c0f3a;
     --danger: #f87171;
     --success: #4ade80;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -121,7 +121,6 @@ a:hover { text-decoration: underline; }
   color: var(--text);
 }
 .brand:hover { text-decoration: none; }
-.brand img { flex: none; }
 .logo { display: block; flex: none; }
 .app-nav .links { display: none; gap: 4px; }
 .app-nav .links a {
@@ -377,17 +376,6 @@ input:focus, select:focus, textarea:focus {
   padding: 20px 20px 32px;
 }
 @media (min-width: 640px) { .navi-shell { padding-top: 20px; } .navi-page { border-radius: 24px; } }
-/* Optional content panel (theme.content): a tinted card behind the header and
-   links whose opacity lets the page background show through. */
-.navi-shell.has-panel .navi-page {
-  background: var(--nv-content-bg, transparent);
-  border-radius: 20px;
-  margin: 12px;
-}
-@media (min-width: 640px) {
-  .navi-shell.has-panel .navi-page { margin: 0 auto; border-radius: 28px; padding: 24px 28px 36px; }
-}
-.navi-shell.has-panel.preview .navi-page { margin: 12px; }
 .navi-top { display: flex; justify-content: space-between; align-items: center; }
 .navi-chip {
   display: inline-flex;
@@ -432,14 +420,35 @@ input:focus, select:focus, textarea:focus {
   background: var(--hover);
   font-size: 13px;
 }
+/* Optional content panel (theme content_background): behind the content, over
+   the page background, which shows through below full opacity. */
+.navi-shell.has-content { padding-left: 12px; padding-right: 12px; }
+.has-content .navi-page { margin-top: 12px; border-radius: 24px; }
+.has-content .navi-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--nv-content-bg);
+  opacity: var(--nv-content-opacity, 1);
+}
 .navi-head { text-align: center; margin: 12px 0 28px; text-shadow: var(--nv-text-shadow, none); }
+/* The ring around the photo (theme avatar_border); no padding when it's off. */
+.navi-avatar-ring {
+  width: fit-content;
+  margin: 0 auto 14px;
+  padding: var(--nv-avatar-ring-width, 0);
+  background: var(--nv-avatar-ring, none);
+  border-radius: var(--nv-avatar-ring-radius, var(--nv-avatar-radius, 50%));
+}
 .navi-avatar {
   width: 96px;
   height: 96px;
   border-radius: var(--nv-avatar-radius, 50%);
   object-fit: cover;
   display: block;
-  margin: 0 auto 14px;
+  margin: 0;
   background: var(--card-bg);
 }
 .navi-avatar.placeholder {
@@ -450,16 +459,6 @@ input:focus, select:focus, textarea:focus {
   font-weight: 800;
   color: var(--on-primary);
   background: var(--primary);
-}
-/* Optional border (theme.avatar_border): a solid color or gradient painted under
-   a transparent border, so it follows the avatar's shape. */
-.navi-avatar.bordered {
-  box-sizing: content-box;
-  border: var(--nv-avatar-border-w, 4px) solid transparent;
-  background: linear-gradient(var(--card-bg), var(--card-bg)) padding-box, var(--nv-avatar-border) border-box;
-}
-.navi-avatar.placeholder.bordered {
-  background: linear-gradient(var(--primary), var(--primary)) padding-box, var(--nv-avatar-border) border-box;
 }
 .navi-avatar.small { width: 64px; height: 64px; margin: 0; font-size: 26px; }
 .navi-head h1 { font-size: 22px; font-weight: 800; margin: 0; overflow-wrap: anywhere; }

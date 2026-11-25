@@ -1,15 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  DEFAULT_AVATAR_BORDER,
+  DEFAULT_CONTENT_BACKGROUND,
   DEFAULT_THEME,
   THEME_PRESETS,
-  avatarBorderPaint,
   backgroundImageUrl,
+  hasContentBackground,
   isDark,
   normalizeTheme,
   readableOn,
   themeStyle,
-  withAvatarBorderKind,
   withBackgroundKind,
+  withFillKind,
 } from "./theme";
 
 const vars = (s: object) => s as Record<string, string>;
@@ -90,40 +92,52 @@ describe("theme helpers", () => {
   });
 });
 
-describe("avatar border and content panel", () => {
-  it("paints solid and gradient avatar borders", () => {
-    expect(vars(themeStyle(DEFAULT_THEME, null))["--nv-avatar-border"]).toBeUndefined();
-    const solid = withAvatarBorderKind(DEFAULT_THEME, "solid");
-    const s = vars(themeStyle({ ...solid, avatar_border: { ...solid.avatar_border, color: "#ff0000", width: 7 } }, null));
-    expect(s["--nv-avatar-border"]).toBe("linear-gradient(#ff0000, #ff0000)");
-    expect(s["--nv-avatar-border-w"]).toBe("7px");
-    const g = vars(themeStyle(withAvatarBorderKind(DEFAULT_THEME, "gradient"), null));
-    expect(g["--nv-avatar-border"]).toMatch(/^linear-gradient\(135deg, #/);
-    expect(avatarBorderPaint({ ...DEFAULT_THEME.avatar_border, kind: "gradient" })).toBeNull();
+describe("avatar border", () => {
+  it("is off by default", () => {
+    const s = vars(themeStyle(DEFAULT_THEME, null));
+    expect(s["--nv-avatar-ring"]).toBeUndefined();
   });
 
-  it("tints the content panel and reads text against it", () => {
-    const dark = { ...DEFAULT_THEME, content: { enabled: true, color: "#111318", opacity: 80 } };
-    const s = vars(themeStyle(dark, null));
-    expect(s["--nv-content-bg"]).toBe("rgba(17, 19, 24, 0.8)");
-    expect(s["--nv-text"]).toBe("#ffffff");
-    // A faint white panel over a dark background keeps light text.
-    const bg = withBackgroundKind(DEFAULT_THEME, "solid");
-    const faint = {
-      ...bg,
-      background: { ...bg.background, color: "#0f172a" },
-      content: { enabled: true, color: "#ffffff", opacity: 10 },
-    };
-    expect(vars(themeStyle(faint, null))["--nv-text"]).toBe("#ffffff");
-    // An opaque white panel over the same background needs dark text.
-    expect(vars(themeStyle({ ...faint, content: { ...faint.content, opacity: 95 } }, null))["--nv-text"]).toBe("#111318");
-    // Disabled: no panel.
+  it("draws a solid or gradient ring of the chosen width", () => {
+    const solid = withFillKind(DEFAULT_AVATAR_BORDER, "solid", "#ffffff");
+    let s = vars(themeStyle({ ...DEFAULT_THEME, avatar_border: { ...solid, width: 6 } }, null));
+    expect(s["--nv-avatar-ring"]).toBe("#ffffff");
+    expect(s["--nv-avatar-ring-width"]).toBe("6px");
+    expect(s["--nv-avatar-ring-radius"]).toBe("50%");
+
+    const gradient = withFillKind(DEFAULT_AVATAR_BORDER, "gradient", "#ffffff");
+    s = vars(themeStyle({ ...DEFAULT_THEME, avatar_shape: "rounded", avatar_border: gradient }, null));
+    expect(s["--nv-avatar-ring"]).toMatch(/^linear-gradient\(135deg, #/);
+    expect(s["--nv-avatar-ring-radius"]).toBe("28px");
+  });
+});
+
+describe("content background", () => {
+  it("is off by default", () => {
+    expect(hasContentBackground(DEFAULT_THEME)).toBe(false);
     expect(vars(themeStyle(DEFAULT_THEME, null))["--nv-content-bg"]).toBeUndefined();
   });
 
-  it("fills in new fields for older stored themes", () => {
-    const t = normalizeTheme({ font: "lora" } as never);
-    expect(t.avatar_border.kind).toBe("none");
-    expect(t.content.enabled).toBe(false);
+  it("sets the panel fill and opacity", () => {
+    const content = { ...DEFAULT_CONTENT_BACKGROUND, kind: "solid" as const, color: "#ffffff", opacity: 35 };
+    const theme = { ...DEFAULT_THEME, content_background: content };
+    expect(hasContentBackground(theme)).toBe(true);
+    const s = vars(themeStyle(theme, null));
+    expect(s["--nv-content-bg"]).toBe("#ffffff");
+    expect(s["--nv-content-opacity"]).toBe("0.35");
+  });
+
+  it("picks text for an opaque panel, else for the page background", () => {
+    const dark = withBackgroundKind(DEFAULT_THEME, "solid");
+    const page = { ...dark, background: { ...dark.background, color: "#0f172a" } };
+    const white = { ...DEFAULT_CONTENT_BACKGROUND, kind: "solid" as const, color: "#ffffff" };
+    expect(vars(themeStyle({ ...page, content_background: { ...white, opacity: 90 } }, null))["--nv-text"]).toBe("#111318");
+    expect(vars(themeStyle({ ...page, content_background: { ...white, opacity: 20 } }, null))["--nv-text"]).toBe("#ffffff");
+  });
+
+  it("fills in themes saved before it existed", () => {
+    const old = normalizeTheme({ font: "lora" } as Partial<typeof DEFAULT_THEME>);
+    expect(old.content_background).toEqual(DEFAULT_CONTENT_BACKGROUND);
+    expect(old.avatar_border).toEqual(DEFAULT_AVATAR_BORDER);
   });
 });

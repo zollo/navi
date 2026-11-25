@@ -5,7 +5,8 @@ import type {
   AvatarShape,
   ButtonShape,
   ButtonStyle,
-  ContentPanel,
+  ContentBackground,
+  ContentBackgroundKind,
   FontName,
   PageTheme,
   ThemeBackground,
@@ -24,17 +25,21 @@ export const DEFAULT_BACKGROUND: ThemeBackground = {
 
 export const DEFAULT_AVATAR_BORDER: AvatarBorder = {
   kind: "none",
-  width: 4,
   color: null,
   gradient_from: null,
   gradient_to: null,
   gradient_angle: 135,
+  width: 4,
 };
 
-export const DEFAULT_CONTENT: ContentPanel = { enabled: false, color: "#ffffff", opacity: 85 };
-
-// Navi's own colors, from the logo.
-export const BRAND_GRADIENT: [string, string] = ["#2b1b80", "#7c1fc8"];
+export const DEFAULT_CONTENT_BACKGROUND: ContentBackground = {
+  kind: "none",
+  color: null,
+  gradient_from: null,
+  gradient_to: null,
+  gradient_angle: 180,
+  opacity: 80,
+};
 
 export const DEFAULT_THEME: PageTheme = {
   background: DEFAULT_BACKGROUND,
@@ -46,7 +51,7 @@ export const DEFAULT_THEME: PageTheme = {
   button_text_color: null,
   avatar_shape: "circle",
   avatar_border: DEFAULT_AVATAR_BORDER,
-  content: DEFAULT_CONTENT,
+  content_background: DEFAULT_CONTENT_BACKGROUND,
 };
 
 // Self-hosted with Fontsource (see lib/fonts.ts); browsers only download a font
@@ -89,8 +94,20 @@ export const AVATAR_BORDER_KINDS: { value: AvatarBorderKind; label: string }[] =
   { value: "gradient", label: "Gradient" },
 ];
 
+export const CONTENT_BACKGROUND_KINDS: { value: ContentBackgroundKind; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "solid", label: "Color" },
+  { value: "gradient", label: "Gradient" },
+];
+
 const RADII: Record<ButtonShape, string> = { square: "4px", rounded: "14px", pill: "999px" };
 const AVATAR_RADII: Record<AvatarShape, string> = { circle: "50%", rounded: "24px", square: "6px" };
+// Corner radius of the ring around the photo, so it hugs the photo's corners.
+function ringRadius(shape: AvatarShape, width: number): string {
+  if (shape === "rounded") return `${24 + width}px`;
+  if (shape === "square") return `${6 + width}px`;
+  return "50%";
+}
 
 export const GRADIENT_PRESETS: [string, string][] = [
   ["#ff7e5f", "#feb47b"],
@@ -101,7 +118,6 @@ export const GRADIENT_PRESETS: [string, string][] = [
   ["#f8cdda", "#1d2b64"],
   ["#fdfcfb", "#e2d1c3"],
   ["#232526", "#414345"],
-  BRAND_GRADIENT,
 ];
 
 export const COLOR_PRESETS = [
@@ -112,17 +128,6 @@ export const COLOR_PRESETS = [
 // One-click looks. Each replaces the whole theme.
 export const THEME_PRESETS: { name: string; theme: PageTheme }[] = [
   { name: "Default", theme: DEFAULT_THEME },
-  {
-    name: "Navi",
-    theme: {
-      ...DEFAULT_THEME,
-      background: { ...DEFAULT_BACKGROUND, kind: "gradient", gradient_from: BRAND_GRADIENT[0], gradient_to: BRAND_GRADIENT[1], gradient_angle: 45 },
-      font: "inter",
-      button_style: "glass",
-      button_shape: "pill",
-      avatar_border: { ...DEFAULT_AVATAR_BORDER, kind: "solid", color: "#ffffff", width: 3 },
-    },
-  },
   {
     name: "Midnight",
     theme: {
@@ -178,6 +183,18 @@ export const THEME_PRESETS: { name: string; theme: PageTheme }[] = [
       button_color: "#4ade80",
       button_shape: "square",
       avatar_shape: "square",
+    },
+  },
+  {
+    name: "Neon",
+    theme: {
+      ...DEFAULT_THEME,
+      background: { ...DEFAULT_BACKGROUND, kind: "gradient", gradient_from: "#ff0080", gradient_to: "#7928ca", gradient_angle: 135 },
+      font: "inter",
+      button_style: "glass",
+      button_shape: "pill",
+      avatar_border: { ...DEFAULT_AVATAR_BORDER, kind: "gradient", gradient_from: "#fde68a", gradient_to: "#ff0080", width: 4 },
+      content_background: { ...DEFAULT_CONTENT_BACKGROUND, kind: "solid", color: "#111318", opacity: 45 },
     },
   },
   {
@@ -251,24 +268,56 @@ function backgroundIsDark(bg: ThemeBackground, hasImage: boolean): boolean | nul
   return null;
 }
 
-// Whether the content panel (blended over the page background) is dark.
-// `behind` is the background's darkness, or null when it follows light/dark mode.
-function panelIsDark(panel: ContentPanel, behind: boolean | null): boolean | null {
-  const a = Math.min(100, Math.max(0, panel.opacity)) / 100;
-  if (behind === null) return a >= 0.5 ? isDark(panel.color) : null;
-  const [r, g, b] = rgb(panel.color);
-  const under = behind ? 17 : 245;
-  return isDark(toHex([r * a + under * (1 - a), g * a + under * (1 - a), b * a + under * (1 - a)]));
-}
-
-// The CSS background that paints the avatar border, or null for none.
-export function avatarBorderPaint(border: AvatarBorder | undefined): string | null {
-  if (!border) return null;
-  if (border.kind === "solid" && border.color) return `linear-gradient(${border.color}, ${border.color})`;
-  if (border.kind === "gradient" && border.gradient_from && border.gradient_to) {
-    return `linear-gradient(${border.gradient_angle}deg, ${border.gradient_from}, ${border.gradient_to})`;
+// A paint for a solid-or-gradient fill, or null when it is off or incomplete.
+function paint(fill: {
+  kind: string;
+  color: string | null;
+  gradient_from: string | null;
+  gradient_to: string | null;
+  gradient_angle: number;
+}): string | null {
+  if (fill.kind === "solid" && fill.color) return fill.color;
+  if (fill.kind === "gradient" && fill.gradient_from && fill.gradient_to) {
+    return `linear-gradient(${fill.gradient_angle}deg, ${fill.gradient_from}, ${fill.gradient_to})`;
   }
   return null;
+}
+
+// The panel's own color (a gradient counts as the mix of its ends), or null.
+function panelColor(content: ContentBackground): string | null {
+  if (content.kind === "solid" && content.color) return content.color;
+  if (content.kind === "gradient" && content.gradient_from && content.gradient_to) {
+    return mix(content.gradient_from, content.gradient_to);
+  }
+  return null;
+}
+
+// `top` laid over `base` at `opacity` (0-1).
+function blend(base: string, top: string, opacity: number): string {
+  const [b, t] = [rgb(base), rgb(top)];
+  return toHex([0, 1, 2].map((i) => b[i] + (t[i] - b[i]) * opacity) as [number, number, number]);
+}
+
+// Whether the text sits on something dark: the panel blended over the page
+// background. Null when that follows the viewer's light/dark mode.
+function contentIsDark(content: ContentBackground, bg: ThemeBackground, hasImage: boolean): boolean | null {
+  const panel = panelColor(content);
+  const opacity = content.opacity / 100;
+  const page = backgroundIsDark(bg, hasImage);
+  if (!panel) return page;
+  // Approximate the page background by one color to blend the panel over.
+  let base: string | null = null;
+  if (hasImage) base = bg.image_dark ? "#000000" : "#ffffff";
+  else if (bg.kind === "solid" && bg.color) base = bg.color;
+  else if (bg.kind === "gradient" && bg.gradient_from && bg.gradient_to) base = mix(bg.gradient_from, bg.gradient_to);
+  if (base) return isDark(blend(base, panel, opacity));
+  // The default background follows light/dark mode: only a mostly opaque panel decides.
+  return opacity >= 0.5 ? isDark(panel) : null;
+}
+
+// Whether the theme puts a panel behind the content (PageView adds a class).
+export function hasContentBackground(theme: PageTheme): boolean {
+  return paint(theme.content_background ?? DEFAULT_CONTENT_BACKGROUND) !== null;
 }
 
 // CSS custom properties that style a page (see `.navi-shell` in index.css).
@@ -291,26 +340,30 @@ export function themeStyle(theme: PageTheme, imageUrl: string | null): CSSProper
     vars["--nv-bg"] = `linear-gradient(${bg.gradient_angle}deg, ${bg.gradient_from}, ${bg.gradient_to})`;
   }
 
-  // Text: the chosen color, else readable on what's behind it (the content
-  // panel and/or the page background), else the app's.
-  const panel = theme.content;
-  const dark = panel?.enabled
-    ? panelIsDark(panel, backgroundIsDark(bg, imageUrl !== null))
-    : backgroundIsDark(bg, imageUrl !== null);
-  const text = theme.text_color ?? (dark === null ? null : dark ? "#ffffff" : "#111318");
-  if (text) vars["--nv-text"] = text;
-  if (panel?.enabled) {
-    vars["--nv-content-bg"] = alpha(panel.color, Math.min(100, Math.max(0, panel.opacity)) / 100);
+  // Content panel: over the page background, which shows through below 100%.
+  const content = theme.content_background ?? DEFAULT_CONTENT_BACKGROUND;
+  const panel = paint(content);
+  if (panel) {
+    vars["--nv-content-bg"] = panel;
+    vars["--nv-content-opacity"] = String(content.opacity / 100);
   }
-  if (imageUrl && !theme.text_color && !(panel?.enabled && panel.opacity >= 50)) {
-    vars["--nv-text-shadow"] = dark ? "0 1px 3px rgba(0, 0, 0, 0.55)" : "0 1px 2px rgba(255, 255, 255, 0.6)";
+  const onPanel = panel !== null;
+
+  // Avatar ring
+  const border = theme.avatar_border ?? DEFAULT_AVATAR_BORDER;
+  const ring = paint(border);
+  if (ring) {
+    vars["--nv-avatar-ring"] = ring;
+    vars["--nv-avatar-ring-width"] = `${border.width}px`;
+    vars["--nv-avatar-ring-radius"] = ringRadius(theme.avatar_shape, border.width);
   }
 
-  // Avatar border
-  const border = avatarBorderPaint(theme.avatar_border);
-  if (border) {
-    vars["--nv-avatar-border"] = border;
-    vars["--nv-avatar-border-w"] = `${theme.avatar_border.width}px`;
+  // Text: the chosen color, else readable on the panel and background, else the app's.
+  const dark = contentIsDark(content, bg, imageUrl !== null);
+  const text = theme.text_color ?? (dark === null ? null : dark ? "#ffffff" : "#111318");
+  if (text) vars["--nv-text"] = text;
+  if (imageUrl && !theme.text_color && (!onPanel || content.opacity < 50)) {
+    vars["--nv-text-shadow"] = dark ? "0 1px 3px rgba(0, 0, 0, 0.55)" : "0 1px 2px rgba(255, 255, 255, 0.6)";
   }
 
   // Link cards
@@ -364,18 +417,18 @@ export function normalizeTheme(theme: Partial<PageTheme> | null | undefined): Pa
     ...(theme ?? {}),
     background: { ...DEFAULT_BACKGROUND, ...(theme?.background ?? {}) },
     avatar_border: { ...DEFAULT_AVATAR_BORDER, ...(theme?.avatar_border ?? {}) },
-    content: { ...DEFAULT_CONTENT, ...(theme?.content ?? {}) },
+    content_background: { ...DEFAULT_CONTENT_BACKGROUND, ...(theme?.content_background ?? {}) },
   };
 }
 
-// Pick an avatar border kind, filling in colors so the theme stays valid.
-export function withAvatarBorderKind(theme: PageTheme, kind: AvatarBorderKind): PageTheme {
-  const b = { ...theme.avatar_border, kind };
-  if (kind === "solid" && !b.color) b.color = "#ffffff";
-  if (kind === "gradient" && (!b.gradient_from || !b.gradient_to)) {
-    [b.gradient_from, b.gradient_to] = BRAND_GRADIENT;
+// Fill in colors when switching a solid-or-gradient fill on, so the theme stays valid.
+export function withFillKind<T extends AvatarBorder | ContentBackground>(fill: T, kind: T["kind"], color: string): T {
+  const next = { ...fill, kind };
+  if (kind === "solid" && !next.color) next.color = color;
+  if (kind === "gradient" && (!next.gradient_from || !next.gradient_to)) {
+    [next.gradient_from, next.gradient_to] = GRADIENT_PRESETS[2];
   }
-  return { ...theme, avatar_border: b };
+  return next;
 }
 
 // Pick a background kind, filling in sensible colors so the theme stays valid.

@@ -20,8 +20,8 @@ export default function Layout() {
     <>
       <nav className="app-nav">
         <NavLink to="/edit" className="brand">
-          <Logo />
-          Navi
+          <Logo size={30} />
+          <span className="wordmark">Navi</span>
         </NavLink>
         <div className="links">
           {tabs.map((t) => (

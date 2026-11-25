@@ -47,3 +47,6 @@ def test_reserved_handles_cover_spa_routes():
     # Fixed routes under /api/pages/ that a handle would collide with.
     for route in ("me", "icons", "handles"):
         assert route in RESERVED_HANDLES
+    # Files the SPA serves at the top level (frontend/public).
+    for route in ("favicon.ico", "apple-touch-icon.png", "site.webmanifest"):
+        assert route in RESERVED_HANDLES

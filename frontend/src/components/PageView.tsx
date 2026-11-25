@@ -69,19 +69,19 @@ export default function PageView({
     <div className="navi-page">
       <div className="navi-top">
         {homeUrl ? (
-          <a href={homeUrl} className="navi-chip" aria-label="Navi home">
-            <Logo size={22} />
+          <a href={homeUrl} className="navi-chip logo-chip" aria-label="Navi home">
+            <Logo size={40} />
           </a>
         ) : (
           <RouterLink
             to="/"
-            className="navi-chip"
+            className="navi-chip logo-chip"
             aria-label="Navi home"
             tabIndex={preview ? -1 : 0}
             // In the editor preview, leaving would throw away unsaved edits.
             onClick={preview ? (e: MouseEvent) => e.preventDefault() : undefined}
           >
-            <Logo size={22} />
+            <Logo size={40} />
           </RouterLink>
         )}
         <button

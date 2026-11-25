@@ -13,6 +13,8 @@
   --danger: #dc2626;
   --success: #15803d;
   --radius: 12px;
+  /* Navi brand, from the logo */
+  --brand-gradient: linear-gradient(45deg, #2b1b80, #5b1fb0 55%, #7c1fc8);
   --shadow: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
   /* Public page */
   --page-bg: #eceef2;
@@ -119,9 +121,7 @@ a:hover { text-decoration: underline; }
   color: var(--text);
 }
 .brand:hover { text-decoration: none; }
-.brand svg { flex: none; }
-/* The app-icon tile gets a soft violet glow where it stands on its own. */
-.landing .navi-logo { filter: drop-shadow(0 10px 24px rgba(109, 40, 217, 0.35)); }
+.logo { display: block; flex: none; }
 .app-nav .links { display: none; gap: 4px; }
 .app-nav .links a {
   padding: 8px 12px;
@@ -204,6 +204,23 @@ h3 { font-size: 16px; margin: 0 0 6px; }
   justify-content: center;
   padding: 16px;
 }
+/* Landing and sign-in: soft glows in the logo's purples. */
+.center-screen.brand-backdrop {
+  background:
+    radial-gradient(60% 45% at 15% 10%, rgba(124, 31, 200, 0.16), transparent 70%),
+    radial-gradient(55% 45% at 90% 95%, rgba(43, 27, 128, 0.16), transparent 70%),
+    var(--bg);
+}
+.wordmark {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+:root[data-theme="dark"] .wordmark { background-image: linear-gradient(45deg, #a78bfa, #e9d5ff); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wordmark { background-image: linear-gradient(45deg, #a78bfa, #e9d5ff); }
+}
 .grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
 @media (min-width: 640px) { .grid.two { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 900px) { .grid.three { grid-template-columns: repeat(3, 1fr); } }
@@ -262,12 +279,15 @@ input:focus, select:focus, textarea:focus {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  background: var(--primary);
-  color: var(--on-primary);
+  background: var(--brand-gradient);
+  color: #ffffff;
   text-decoration: none;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(43, 27, 128, 0.25);
 }
-.btn:hover { background: var(--primary-hover); text-decoration: none; }
+.btn:hover { filter: brightness(1.12); text-decoration: none; }
+.btn.secondary, .btn.danger, .btn.ghost { box-shadow: none; }
+.btn.secondary:hover, .btn.danger:hover, .btn.ghost:hover { filter: none; }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn.secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
 .btn.secondary:hover { background: var(--hover); }
@@ -372,6 +392,9 @@ input:focus, select:focus, textarea:focus {
 }
 .navi-chip:hover { text-decoration: none; background: var(--card-hover); }
 .navi-chip:disabled { cursor: default; }
+.navi-chip.logo-chip, .navi-chip.logo-chip:hover { background: none; box-shadow: none; }
+.navi-chip.logo-chip .logo { border-radius: 10px; box-shadow: 0 2px 8px rgba(43, 27, 128, 0.3); transition: transform 0.15s; }
+.navi-chip.logo-chip:hover .logo { transform: scale(1.06); }
 .navi-toast {
   position: absolute;
   top: 24px;
@@ -661,7 +684,8 @@ input:focus, select:focus, textarea:focus {
   .row-actions { margin-left: auto; }
 }
 .landing { text-align: center; max-width: 420px; }
-.landing h1 { font-size: 40px; margin-top: 12px; }
+.landing h1 { font-size: 44px; margin-top: 16px; letter-spacing: -0.03em; }
+.landing .logo { margin: 0 auto; filter: drop-shadow(0 12px 28px rgba(91, 31, 176, 0.35)); }
 
 /* ── Appearance (theme editor) ─────────────────────────────────────── */
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -717,6 +741,7 @@ input:focus, select:focus, textarea:focus {
 .swatch.wide { width: 56px; border-radius: 10px; }
 .swatch:hover { transform: scale(1.08); }
 input[type="range"] { width: 100%; accent-color: var(--primary); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--primary); }
 .preset-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));

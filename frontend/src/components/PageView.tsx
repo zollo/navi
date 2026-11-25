@@ -4,7 +4,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { api } from "../api/client";
 import { ICONS, NaviIcon } from "../lib/icons";
 import { canShare, copyText, pageUrl } from "../lib/page";
-import { backgroundImageUrl, themeStyle } from "../lib/theme";
+import { avatarBorderPaint, backgroundImageUrl, themeStyle } from "../lib/theme";
 import type { PageInput } from "../types";
 import LinkMenu from "./LinkMenu";
 import Logo from "./Logo";
@@ -62,26 +62,30 @@ export default function PageView({
   const image = backgroundImageUrl(page.theme.background, customBackgroundUrl);
   const style = themeStyle(page.theme, image ? api.baseUrl + image : null);
   const Shell = preview ? "div" : "main";
+  const avatarClass = `navi-avatar ${avatarBorderPaint(page.theme.avatar_border) ? "bordered" : ""}`;
 
   return (
-    <Shell className={`navi-shell btn-${page.theme.button_style} font-${page.theme.font} ${preview ? "preview" : ""}`} style={style}>
+    <Shell
+      className={`navi-shell btn-${page.theme.button_style} font-${page.theme.font} ${page.theme.content?.enabled ? "has-panel" : ""} ${preview ? "preview" : ""}`}
+      style={style}
+    >
     <div className="navi-backdrop" aria-hidden />
     <div className="navi-page">
       <div className="navi-top">
         {homeUrl ? (
-          <a href={homeUrl} className="navi-chip" aria-label="Navi home">
-            <Logo size={22} />
+          <a href={homeUrl} className="navi-chip logo-chip" aria-label="Navi home">
+            <Logo size={40} />
           </a>
         ) : (
           <RouterLink
             to="/"
-            className="navi-chip"
+            className="navi-chip logo-chip"
             aria-label="Navi home"
             tabIndex={preview ? -1 : 0}
             // In the editor preview, leaving would throw away unsaved edits.
             onClick={preview ? (e: MouseEvent) => e.preventDefault() : undefined}
           >
-            <Logo size={22} />
+            <Logo size={40} />
           </RouterLink>
         )}
         <button
@@ -103,9 +107,9 @@ export default function PageView({
 
       <header className="navi-head">
         {avatarUrl ? (
-          <img className="navi-avatar" src={api.assetUrl(avatarUrl)} alt="" />
+          <img className={avatarClass} src={api.assetUrl(avatarUrl)} alt="" />
         ) : (
-          <div className="navi-avatar placeholder" aria-hidden>
+          <div className={`${avatarClass} placeholder`} aria-hidden>
             {initials(page)}
           </div>
         )}

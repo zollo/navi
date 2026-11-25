@@ -1187,6 +1187,72 @@
         ],
         "title": "AuthConfig"
       },
+      "AvatarBorder": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/AvatarBorderKind",
+            "default": "none"
+          },
+          "width": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Width",
+            "default": 4
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "gradient_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient From"
+          },
+          "gradient_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient To"
+          },
+          "gradient_angle": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Gradient Angle",
+            "default": 135
+          }
+        },
+        "type": "object",
+        "title": "AvatarBorder"
+      },
+      "AvatarBorderKind": {
+        "type": "string",
+        "enum": [
+          "none",
+          "solid",
+          "gradient"
+        ],
+        "title": "AvatarBorderKind"
+      },
       "AvatarShape": {
         "type": "string",
         "enum": [
@@ -1396,6 +1462,30 @@
           "shadow"
         ],
         "title": "ButtonStyle"
+      },
+      "ContentPanel": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": false
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#ffffff"
+          },
+          "opacity": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Opacity",
+            "default": 85
+          }
+        },
+        "type": "object",
+        "title": "ContentPanel",
+        "description": "A panel behind the page's content (header and links), over the page background."
       },
       "DnsRecord": {
         "properties": {
@@ -2154,6 +2244,12 @@
           "avatar_shape": {
             "$ref": "#/components/schemas/AvatarShape",
             "default": "circle"
+          },
+          "avatar_border": {
+            "$ref": "#/components/schemas/AvatarBorder"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ContentPanel"
           }
         },
         "type": "object",

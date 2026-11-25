@@ -29,11 +29,11 @@ export default function Register() {
   };
 
   return (
-    <div className="center-screen">
+    <div className="center-screen brand-backdrop">
       <div className="card" style={{ width: "100%", maxWidth: 400 }}>
         <Link to="/" className="brand" style={{ marginBottom: 8 }}>
-          <Logo />
-          Navi
+          <Logo size={36} />
+          <span className="wordmark">Navi</span>
         </Link>
         <p className="subtitle">Create your account, then claim your page.</p>
         {error && <div className="alert error">{error}</div>}

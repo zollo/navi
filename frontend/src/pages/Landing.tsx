@@ -8,10 +8,10 @@ export default function Landing() {
   if (user) return <Navigate to="/edit" replace />;
 
   return (
-    <div className="center-screen">
+    <div className="center-screen brand-backdrop">
       <div className="landing">
-        <Logo size={64} />
-        <h1>Navi</h1>
+        <Logo size={112} />
+        <h1 className="wordmark">Navi</h1>
         <p className="subtitle">One simple page for all of your important links.</p>
         <div className="row" style={{ justifyContent: "center" }}>
           <Link className="btn" to="/register">

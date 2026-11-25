@@ -1,4 +1,4 @@
-"""Page look: background, font, text color, buttons and avatar shape.
+"""Page look: background, content panel, font, text color, buttons and avatar.
 
 Stored as JSON on the page (`pages.theme`) and saved with the rest of the page by
 `PUT /api/pages/me`. Every field has a default, so `{}` is the default look, and
@@ -90,6 +90,39 @@ class ThemeBackground(BaseModel):
         return self
 
 
+class AvatarBorderKind(enum.StrEnum):
+    none = "none"
+    solid = "solid"
+    gradient = "gradient"
+
+
+class AvatarBorder(BaseModel):
+    kind: AvatarBorderKind = AvatarBorderKind.none
+    width: int = Field(default=4, ge=1, le=12)  # px
+    color: Color | None = None
+    gradient_from: Color | None = None
+    gradient_to: Color | None = None
+    gradient_angle: int = Field(default=135, ge=0, le=360)
+
+    @model_validator(mode="after")
+    def _complete(self) -> AvatarBorder:
+        if self.kind == AvatarBorderKind.solid and self.color is None:
+            raise ValueError("a solid avatar border needs a color")
+        if self.kind == AvatarBorderKind.gradient and (
+            self.gradient_from is None or self.gradient_to is None
+        ):
+            raise ValueError("a gradient avatar border needs two colors")
+        return self
+
+
+class ContentPanel(BaseModel):
+    """A panel behind the page's content (header and links), over the page background."""
+
+    enabled: bool = False
+    color: Color = "#ffffff"
+    opacity: int = Field(default=85, ge=0, le=100)  # percent; lower lets the background through
+
+
 class Theme(BaseModel):
     background: ThemeBackground = Field(default_factory=ThemeBackground)
     font: Font = Font.system
@@ -101,3 +134,5 @@ class Theme(BaseModel):
     button_color: Color | None = None
     button_text_color: Color | None = None
     avatar_shape: AvatarShape = AvatarShape.circle
+    avatar_border: AvatarBorder = Field(default_factory=AvatarBorder)
+    content: ContentPanel = Field(default_factory=ContentPanel)

@@ -16,6 +16,14 @@ THEME = {
     "button_color": "#ffffff",
     "button_text_color": "#111111",
     "avatar_shape": "rounded",
+    "avatar_border": {
+        "kind": "gradient",
+        "width": 6,
+        "gradient_from": "#2B1B80",
+        "gradient_to": "#7c1fc8",
+        "gradient_angle": 45,
+    },
+    "content": {"enabled": True, "color": "#111318", "opacity": 60},
 }
 
 
@@ -25,6 +33,8 @@ def test_default_theme(client, alice):
     assert page["theme"]["font"] == "system"
     assert page["theme"]["text_color"] is None
     assert page["theme"]["button_shape"] == "rounded"
+    assert page["theme"]["avatar_border"]["kind"] == "none"
+    assert page["theme"]["content"]["enabled"] is False
     assert page["background_url"] is None
 
 
@@ -37,6 +47,15 @@ def test_save_and_read_theme(client, alice):
     assert theme["font"] == "playfair"
     assert theme["button_style"] == "glass"
     assert theme["avatar_shape"] == "rounded"
+    assert theme["avatar_border"] == {
+        "kind": "gradient",
+        "width": 6,
+        "color": None,
+        "gradient_from": "#2b1b80",
+        "gradient_to": "#7c1fc8",
+        "gradient_angle": 45,
+    }
+    assert theme["content"] == {"enabled": True, "color": "#111318", "opacity": 60}
 
     # Saving without a theme resets the look, like every other omitted field.
     client.put("/api/pages/me", headers=alice, json=PAGE)
@@ -55,6 +74,14 @@ def test_theme_validation(client, alice):
         {"background": {"kind": "solid", "color": "#000000", "gradient_angle": 361}},
         {"background": {"kind": "curated"}},
         {"background": {"kind": "video"}},
+        {"avatar_border": {"kind": "solid"}},
+        {"avatar_border": {"kind": "gradient", "gradient_from": "#000000"}},
+        {"avatar_border": {"kind": "solid", "color": "#000000", "width": 0}},
+        {"avatar_border": {"kind": "solid", "color": "#000000", "width": 13}},
+        {"avatar_border": {"kind": "dotted"}},
+        {"content": {"enabled": True, "opacity": 101}},
+        {"content": {"enabled": True, "opacity": -1}},
+        {"content": {"enabled": True, "color": "white"}},
     ]
     for theme in bad:
         resp = client.put("/api/pages/me", headers=alice, json={**PAGE, "theme": theme})

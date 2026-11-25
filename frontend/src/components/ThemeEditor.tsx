@@ -2,6 +2,7 @@ import { useId, useRef, useState } from "react";
 import { LuCheck, LuImagePlus, LuRotateCcw } from "react-icons/lu";
 import { api } from "../api/client";
 import {
+  AVATAR_BORDER_KINDS,
   AVATAR_SHAPES,
   BUTTON_SHAPES,
   BUTTON_STYLES,
@@ -11,9 +12,18 @@ import {
   GRADIENT_PRESETS,
   THEME_PRESETS,
   themeStyle,
+  withAvatarBorderKind,
   withBackgroundKind,
 } from "../lib/theme";
-import type { Background, BackgroundKind, FontName, PageTheme, ThemeBackground } from "../types";
+import type {
+  AvatarBorder,
+  Background,
+  BackgroundKind,
+  ContentPanel,
+  FontName,
+  PageTheme,
+  ThemeBackground,
+} from "../types";
 
 // A row of toggle buttons for picking one of a few options.
 function Segmented<T extends string>({
@@ -40,6 +50,24 @@ function Segmented<T extends string>({
         >
           {o.label}
         </button>
+      ))}
+    </div>
+  );
+}
+
+// Gradient preset swatches.
+function GradientPresets({ onPick }: { onPick: (from: string, to: string) => void }) {
+  return (
+    <div className="gradient-presets">
+      {GRADIENT_PRESETS.map(([a, b]) => (
+        <button
+          key={a + b}
+          type="button"
+          className="swatch wide"
+          style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}
+          aria-label={`Gradient ${a} to ${b}`}
+          onClick={() => onPick(a, b)}
+        />
       ))}
     </div>
   );
@@ -132,8 +160,8 @@ interface Props {
   gallery: Background[];
 }
 
-// The "Appearance" card of the editor: presets, background, fonts, colors, button
-// and avatar shapes. Changes show in the live preview and save with the page.
+// The "Appearance" card of the editor: presets, background, content panel, fonts,
+// colors, button shapes and the profile photo's shape and border. Changes show in the live preview and save with the page.
 export default function ThemeEditor({
   theme,
   onChange,
@@ -147,6 +175,10 @@ export default function ThemeEditor({
   const bg = theme.background;
   const set = (patch: Partial<PageTheme>) => onChange({ ...theme, ...patch });
   const setBg = (patch: Partial<ThemeBackground>) => onChange({ ...theme, background: { ...bg, ...patch } });
+  const border = theme.avatar_border;
+  const setBorder = (patch: Partial<AvatarBorder>) => onChange({ ...theme, avatar_border: { ...border, ...patch } });
+  const panel = theme.content;
+  const setPanel = (patch: Partial<ContentPanel>) => onChange({ ...theme, content: { ...panel, ...patch } });
 
   const pickKind = (kind: BackgroundKind) => {
     if (kind === "image" && !customBackgroundUrl) {
@@ -216,18 +248,7 @@ export default function ThemeEditor({
 
       {bg.kind === "gradient" && (
         <div className="theme-sub">
-          <div className="gradient-presets">
-            {GRADIENT_PRESETS.map(([a, b]) => (
-              <button
-                key={a + b}
-                type="button"
-                className="swatch wide"
-                style={{ background: `linear-gradient(135deg, ${a}, ${b})` }}
-                aria-label={`Gradient ${a} to ${b}`}
-                onClick={() => setBg({ gradient_from: a, gradient_to: b })}
-              />
-            ))}
-          </div>
+          <GradientPresets onPick={(gradient_from, gradient_to) => setBg({ gradient_from, gradient_to })} />
           <div className="grid two">
             <ColorField label="From" value={bg.gradient_from} onChange={(gradient_from) => setBg({ gradient_from })} />
             <ColorField label="To" value={bg.gradient_to} onChange={(gradient_to) => setBg({ gradient_to })} />
@@ -297,6 +318,31 @@ export default function ThemeEditor({
         </div>
       )}
 
+      <h3>Content panel</h3>
+      <label className="check">
+        <input type="checkbox" checked={panel.enabled} onChange={(e) => setPanel({ enabled: e.target.checked })} />
+        Show a panel behind your profile and links
+      </label>
+      {panel.enabled && (
+        <div className="theme-sub">
+          <ColorField label="Panel color" value={panel.color} onChange={(color) => setPanel({ color: color ?? "#ffffff" })} />
+          <Swatches label="Suggested panel colors" colors={COLOR_PRESETS} onPick={(color) => setPanel({ color })} />
+          <div className="field">
+            <label htmlFor="panel-opacity">Opacity: {panel.opacity}%</label>
+            <input
+              id="panel-opacity"
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={panel.opacity}
+              onChange={(e) => setPanel({ opacity: Number(e.target.value) })}
+            />
+            <p className="muted small">Lower it to let the page background show through.</p>
+          </div>
+        </div>
+      )}
+
       <h3>Text</h3>
       <div className="grid two">
         <div className="field">
@@ -338,7 +384,62 @@ export default function ThemeEditor({
       </div>
 
       <h3>Profile photo</h3>
-      <Segmented label="Profile photo shape" options={AVATAR_SHAPES} value={theme.avatar_shape} onChange={(avatar_shape) => set({ avatar_shape })} />
+      <div className="field">
+        <label>Shape</label>
+        <Segmented label="Profile photo shape" options={AVATAR_SHAPES} value={theme.avatar_shape} onChange={(avatar_shape) => set({ avatar_shape })} />
+      </div>
+      <div className="field">
+        <label>Border</label>
+        <Segmented
+          label="Profile photo border"
+          options={AVATAR_BORDER_KINDS}
+          value={border.kind}
+          onChange={(kind) => onChange(withAvatarBorderKind(theme, kind))}
+        />
+      </div>
+      {border.kind !== "none" && (
+        <div className="theme-sub">
+          {border.kind === "solid" && (
+            <>
+              <ColorField label="Border color" value={border.color} onChange={(color) => setBorder({ color })} />
+              <Swatches label="Suggested border colors" colors={COLOR_PRESETS} onPick={(color) => setBorder({ color })} />
+            </>
+          )}
+          {border.kind === "gradient" && (
+            <>
+              <GradientPresets onPick={(gradient_from, gradient_to) => setBorder({ gradient_from, gradient_to })} />
+              <div className="grid two">
+                <ColorField label="From" value={border.gradient_from} onChange={(gradient_from) => setBorder({ gradient_from })} />
+                <ColorField label="To" value={border.gradient_to} onChange={(gradient_to) => setBorder({ gradient_to })} />
+              </div>
+              <div className="field">
+                <label htmlFor="border-angle">Direction: {border.gradient_angle}°</label>
+                <input
+                  id="border-angle"
+                  type="range"
+                  min={0}
+                  max={360}
+                  step={5}
+                  value={border.gradient_angle}
+                  onChange={(e) => setBorder({ gradient_angle: Number(e.target.value) })}
+                />
+              </div>
+            </>
+          )}
+          <div className="field">
+            <label htmlFor="border-width">Thickness: {border.width}px</label>
+            <input
+              id="border-width"
+              type="range"
+              min={1}
+              max={12}
+              step={1}
+              value={border.width}
+              onChange={(e) => setBorder({ width: Number(e.target.value) })}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

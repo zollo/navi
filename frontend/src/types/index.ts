@@ -81,6 +81,23 @@ export type FontName = "system" | "inter" | "nunito" | "lora" | "playfair" | "sp
 export type ButtonStyle = "filled" | "outline" | "glass" | "shadow";
 export type ButtonShape = "square" | "rounded" | "pill";
 export type AvatarShape = "circle" | "rounded" | "square";
+export type AvatarBorderKind = "none" | "solid" | "gradient";
+
+export interface AvatarBorder {
+  kind: AvatarBorderKind;
+  width: number; // px, 1–12
+  color: string | null;
+  gradient_from: string | null;
+  gradient_to: string | null;
+  gradient_angle: number;
+}
+
+// A panel behind the header and links, over the page background.
+export interface ContentPanel {
+  enabled: boolean;
+  color: string;
+  opacity: number; // percent, 0–100
+}
 
 export interface ThemeBackground {
   kind: BackgroundKind;
@@ -102,6 +119,8 @@ export interface PageTheme {
   button_color: string | null;
   button_text_color: string | null;
   avatar_shape: AvatarShape;
+  avatar_border: AvatarBorder;
+  content: ContentPanel;
 }
 
 // A curated background from the gallery.

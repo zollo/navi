@@ -1,4 +1,4 @@
-"""Page look: background, font, text color, buttons and avatar shape.
+"""Page look: background, content panel, font, text color, buttons and avatar.
 
 Stored as JSON on the page (`pages.theme`) and saved with the rest of the page by
 `PUT /api/pages/me`. Every field has a default, so `{}` is the default look, and
@@ -64,6 +64,18 @@ class AvatarShape(enum.StrEnum):
     square = "square"
 
 
+class AvatarBorderKind(enum.StrEnum):
+    none = "none"
+    solid = "solid"
+    gradient = "gradient"
+
+
+class ContentBackgroundKind(enum.StrEnum):
+    none = "none"  # the links sit straight on the page background
+    solid = "solid"
+    gradient = "gradient"
+
+
 class ThemeBackground(BaseModel):
     kind: BackgroundKind = BackgroundKind.default
     # Solid color; also shown under an image while it loads.
@@ -90,6 +102,49 @@ class ThemeBackground(BaseModel):
         return self
 
 
+class AvatarBorder(BaseModel):
+    """A ring around the profile photo, in one color or a gradient."""
+
+    kind: AvatarBorderKind = AvatarBorderKind.none
+    color: Color | None = None
+    gradient_from: Color | None = None
+    gradient_to: Color | None = None
+    gradient_angle: int = Field(default=135, ge=0, le=360)
+    width: int = Field(default=4, ge=1, le=16)  # px
+
+    @model_validator(mode="after")
+    def _complete(self) -> AvatarBorder:
+        if self.kind == AvatarBorderKind.solid and self.color is None:
+            raise ValueError("a solid avatar border needs a color")
+        if self.kind == AvatarBorderKind.gradient and (
+            self.gradient_from is None or self.gradient_to is None
+        ):
+            raise ValueError("a gradient avatar border needs two colors")
+        return self
+
+
+class ContentBackground(BaseModel):
+    """A panel behind the avatar, text and links, separate from the page
+    background. Below full opacity the page background shows through."""
+
+    kind: ContentBackgroundKind = ContentBackgroundKind.none
+    color: Color | None = None
+    gradient_from: Color | None = None
+    gradient_to: Color | None = None
+    gradient_angle: int = Field(default=180, ge=0, le=360)
+    opacity: int = Field(default=80, ge=0, le=100)  # percent
+
+    @model_validator(mode="after")
+    def _complete(self) -> ContentBackground:
+        if self.kind == ContentBackgroundKind.solid and self.color is None:
+            raise ValueError("a solid content background needs a color")
+        if self.kind == ContentBackgroundKind.gradient and (
+            self.gradient_from is None or self.gradient_to is None
+        ):
+            raise ValueError("a gradient content background needs two colors")
+        return self
+
+
 class Theme(BaseModel):
     background: ThemeBackground = Field(default_factory=ThemeBackground)
     font: Font = Font.system
@@ -101,3 +156,5 @@ class Theme(BaseModel):
     button_color: Color | None = None
     button_text_color: Color | None = None
     avatar_shape: AvatarShape = AvatarShape.circle
+    avatar_border: AvatarBorder = Field(default_factory=AvatarBorder)
+    content_background: ContentBackground = Field(default_factory=ContentBackground)

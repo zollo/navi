@@ -30,6 +30,7 @@ config:
   # Comma-separated emails that become admins on sign-in (admins curate the
   # background gallery). Or: kubectl exec ... -- python -m app.manage admin <email>
   ADMIN_EMAILS: ""
+  LINKTREE_IMPORT_ENABLED: "true"
   MAX_AVATAR_KB: "1024"
   MAX_BACKGROUND_KB: "2048"
 

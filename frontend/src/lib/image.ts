@@ -1,23 +1,9 @@
 // Browser-side image helpers: shrink an upload to fit the server's size limit,
 // and tell whether an image is mostly dark.
 
-const MAX_SIDE = 2400;
+import { loadImage } from "./avatar";
 
-function loadImage(file: Blob): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(img);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("That file isn't an image this browser can read"));
-    };
-    img.src = url;
-  });
-}
+const MAX_SIDE = 2400;
 
 function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, type, quality));

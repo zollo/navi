@@ -16,6 +16,8 @@ dependencies = [
     "pyjwt==2.15.1",
     "python-multipart==0.0.32",
     "email-validator==2.3.0",
+    # Outbound HTTP (Linktree import); also Starlette's TestClient transport.
+    "httpx2==2.16.2",
 ]
 
 [project.optional-dependencies]
@@ -24,8 +26,6 @@ dev = [
     "pytest-asyncio==1.4.0",
     "ruff==0.17.1",
     "aiosqlite==0.22.1",
-    # TestClient transport.
-    "httpx2==2.16.2",
 ]
 
 [tool.ruff]

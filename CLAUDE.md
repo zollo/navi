@@ -46,13 +46,15 @@ npm test             # vitest
 
 **URLs** must start with `https://`, `http://` or `mailto:` (`schemas/page.py`), which blocks `javascript:`/`data:` links. Public links render with `rel="noopener noreferrer nofollow"`.
 
-**Icons** (`models/page.Icon`) are stored as VARCHAR (`models/base.str_enum`), so adding one needs no migration: add the enum value, the `IconName` type in `frontend/src/types`, and an entry in `frontend/src/lib/icons.tsx` (react-icons: Font Awesome 6 brands, Lucide for generic). `guessIcon` picks one from a pasted URL's host.
+**Icons** (`models/page.Icon`) are stored as VARCHAR (`models/base.str_enum`), so adding one needs no migration: add the enum value, the `IconName` type in `frontend/src/types`, and an entry in `frontend/src/lib/icons.tsx` (plus host rules in `backend/app/services/icons.py` if it has one) (react-icons: Font Awesome 6 brands, Lucide for generic). `guessIcon` picks one from a pasted URL's host.
 
 **Themes** (`schemas/theme.py`, mirrored in `frontend/src/lib/theme.ts` and `types`): stored as JSON in `pages.theme` and validated on read too (an unreadable theme falls back to the default). Background kind `default|solid|gradient|image|curated`, font, text color, button style/shape/colors, avatar shape. Null colors mean automatic (readable on the background, or the viewer's light/dark mode). `page_service.page_theme` resolves the image URL and falls an `image`/`curated` background back to its color when the image is gone. The SPA turns a theme into `--nv-*` CSS custom properties on `.navi-shell` (`themeStyle`); the default look sets none, so it still follows light/dark mode. Fonts are self-hosted via Fontsource (`lib/fonts.ts`); adding one means the `Font` enum, `FontName`, `FONTS` and an import.
 
 **Admins:** `users.is_admin`, granted on sign-in to emails in `ADMIN_EMAILS` or by `python -m app.manage admin <email> [--revoke]`. Only admins can write `/api/admin/*` (the curated gallery, `get_admin_user`); the SPA shows them a Backgrounds tab at `/admin`.
 
-**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. A page's own background image works the same way (`pages.background`, `MAX_BACKGROUND_KB`, `PUT /api/pages/me/background`); it shows once the page is saved with background kind `image`. `core/images.check_image` validates every upload. The SPA shrinks images to fit before uploading (`lib/image.ts`, limits from `GET /api/config`).
+**Linktree import** (`services/linktree_service.py`): `POST /api/import/linktree` fetches a public `linktr.ee/<name>` page, reads its Next.js `__NEXT_DATA__` JSON (`pageProps.links` with `GROUP`/`HEADER` → sections, `socialLinks` → icons) and returns a draft page plus the avatar as a data: URL; nothing is saved until the editor does `PUT /api/pages/me` (+ avatar upload). It only ever fetches linktr.ee hosts (redirects re-checked), caps sizes, and maps link icons with `services/icons.guess_icon`, which mirrors the frontend's `guessIcon`. `LINKTREE_IMPORT_ENABLED` turns it off. Tests mock linktr.ee via `linktree_service.transport`.
+
+**Avatars:** bytes live in Postgres (`pages.avatar`, deferred column) so the API is stateless. PNG/JPEG/WebP/GIF only (no SVG), `MAX_AVATAR_KB`. `avatar_url` carries `?v=<avatar_version>` so it can be cached. The editor never uploads the picked file directly: `components/AvatarEditor.tsx` (crop/zoom/rotate/flip on a canvas) re-encodes it as a ≤512px square WebP (JPEG where the browser can't encode WebP), stepping quality then size down (`lib/avatar.ts`) until it fits under `max_avatar_kb` from the public `GET /api/config`. So any image the browser can decode works (HEIC on Safari, AVIF), and animated GIFs become stills. A page's own background image is stored like the avatar (`pages.background`, `MAX_BACKGROUND_KB`, `PUT /api/pages/me/background`); it shows once the page is saved with background kind `image`. `core/images.check_image` validates every upload. Background images are shrunk to fit `max_background_kb` the same way (`lib/image.ts`).
 
 **Auth:** email + password, `Authorization: Bearer <session JWT>` from `/api/auth/login` or `/api/auth/register`, stored in localStorage by the SPA. `ALLOW_REGISTRATION` toggles sign-up.
 
@@ -67,7 +69,7 @@ npm test             # vitest
 - Don't annotate 204 routes with `-> None`; return `Response(status_code=204)`.
 - bcrypt ≥ 5 raises on passwords > 72 bytes; `core/security.py` truncates explicitly.
 - SQLAlchemy relationship forward refs stay quoted; ruff `UP037` is intentionally ignored.
-- Starlette's `TestClient` needs `httpx2` (dev dependency).
+- Starlette's `TestClient` needs `httpx2` (a runtime dependency, also used for the Linktree fetch).
 - **TypeScript:** import `type FormEvent` / `type ReactNode` / `type MouseEvent` from `react`; don't use the `React.*` namespace.
 - **Healthchecks:** frontend checks must hit `127.0.0.1`, not `localhost` (busybox wget tries `::1`; nginx listens IPv4-only).
 

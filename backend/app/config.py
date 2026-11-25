@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # the curated background gallery).
     admin_emails: str = Field(default="", alias="ADMIN_EMAILS")
 
+    # Let signed-in users import a page from Linktree (the API fetches linktr.ee).
+    linktree_import_enabled: bool = Field(default=True, alias="LINKTREE_IMPORT_ENABLED")
+
     # Uploads (avatars, background images)
     max_avatar_kb: int = Field(default=1024, alias="MAX_AVATAR_KB")
     max_background_kb: int = Field(default=2048, alias="MAX_BACKGROUND_KB")

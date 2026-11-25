@@ -1,4 +1,4 @@
-import type { Page, PageInput } from "../types";
+import type { Page, PageImport, PageInput } from "../types";
 import { DEFAULT_THEME, normalizeTheme } from "./theme";
 
 // Mirrors backend/app/services/page_service.py HANDLE_RE / RESERVED_HANDLES.
@@ -102,4 +102,28 @@ export function move<T>(list: T[], i: number, delta: number): T[] {
   const next = list.slice();
   [next[i], next[j]] = [next[j], next[i]];
   return next;
+}
+
+// Put an imported page into the draft, keeping the handle. An empty import still
+// leaves one section to add links to.
+export function applyImport(draft: PageInput, imported: PageImport): PageInput {
+  return {
+    handle: draft.handle,
+    title: imported.title,
+    tagline: imported.tagline,
+    socials: imported.socials,
+    sections: imported.sections.length ? imported.sections : [{ title: "Links", links: [] }],
+    // An import replaces the content, not the look.
+    theme: draft.theme,
+  };
+}
+
+// A data: URL (an imported avatar) as a File for the multipart avatar upload.
+export function dataUrlToFile(dataUrl: string, name = "avatar"): File {
+  const m = /^data:([^;,]+);base64,(.*)$/.exec(dataUrl);
+  if (!m) throw new Error("Not a base64 data: URL");
+  const bin = atob(m[2]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new File([bytes], `${name}.${m[1].split("/")[1] ?? "img"}`, { type: m[1] });
 }

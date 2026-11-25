@@ -84,11 +84,17 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return handle<T>(resp);
 }
 
-async function upload<T>(path: string, file: File): Promise<T> {
+// Multipart upload of `file`, plus any extra form fields. PUT unless told otherwise.
+async function upload<T>(
+  path: string,
+  file: File,
+  { method = "PUT", fields = {} }: { method?: string; fields?: Record<string, string> } = {},
+): Promise<T> {
   const form = new FormData();
+  for (const [k, v] of Object.entries(fields)) form.append(k, v);
   form.append("file", file);
   const resp = await fetch(`${BASE_URL}${path}`, {
-    method: "PUT",
+    method,
     headers: authHeaders(),
     body: form,
   });

@@ -65,13 +65,12 @@ export default function PublicPage({ handle: fixedHandle, primaryUrl }: Props) {
   if (!page) return <div className="center-screen muted">Loading…</div>;
 
   return (
-    <main className="navi-shell">
-      <PageView
-        page={toInput(page)}
-        avatarUrl={page.avatar_url}
-        shareUrl={primaryUrl ? window.location.origin : undefined}
-        homeUrl={primaryUrl}
-      />
-    </main>
+    <PageView
+      page={toInput(page)}
+      avatarUrl={page.avatar_url}
+      customBackgroundUrl={page.custom_background_url}
+      shareUrl={primaryUrl ? window.location.origin : undefined}
+      homeUrl={primaryUrl}
+    />
   );
 }

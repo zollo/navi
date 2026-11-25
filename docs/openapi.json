@@ -455,6 +455,78 @@
         ]
       }
     },
+    "/api/pages/me/background": {
+      "put": {
+        "tags": [
+          "pages"
+        ],
+        "summary": "Upload My Background",
+        "description": "Upload a PNG, JPEG, WebP or GIF background image (multipart `file`).\n\nIt shows once the page is saved with `theme.background.kind` = `image`.",
+        "operationId": "upload_my_background",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_my_background"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "pages"
+        ],
+        "summary": "Delete My Background",
+        "description": "Remove your background image. A page showing it falls back to its color.",
+        "operationId": "delete_my_background",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/pages/icons": {
       "get": {
         "tags": [
@@ -597,6 +669,253 @@
             "content": {
               "image/*": {}
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pages/{handle}/background": {
+      "get": {
+        "tags": [
+          "pages"
+        ],
+        "summary": "Get Page Background",
+        "description": "A page's own background image. URLs carry `?v=` so they can be cached.",
+        "operationId": "get_page_background",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Handle"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/*": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backgrounds": {
+      "get": {
+        "tags": [
+          "backgrounds"
+        ],
+        "summary": "List Backgrounds",
+        "description": "The curated backgrounds anyone can pick for their page.",
+        "operationId": "list_backgrounds",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backgrounds/{background_id}/image": {
+      "get": {
+        "tags": [
+          "backgrounds"
+        ],
+        "summary": "Get Background Image",
+        "description": "A curated background's image. Images never change, so it is cached for good.",
+        "operationId": "get_background_image",
+        "parameters": [
+          {
+            "name": "background_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Background Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "image/*": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/backgrounds": {
+      "post": {
+        "tags": [
+          "backgrounds"
+        ],
+        "summary": "Create Background",
+        "description": "Add a background to the gallery (admins; multipart `file`, `name`, `dark`).",
+        "operationId": "create_background",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_background"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/admin/backgrounds/{background_id}": {
+      "patch": {
+        "tags": [
+          "backgrounds"
+        ],
+        "summary": "Update Background",
+        "description": "Rename a background or change whether it counts as dark (admins).",
+        "operationId": "update_background",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "background_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Background Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackgroundUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackgroundRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "backgrounds"
+        ],
+        "summary": "Delete Background",
+        "description": "Remove a background from the gallery (admins). Pages using it fall back to\ntheir background color.",
+        "operationId": "delete_background",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "background_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Background Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -868,6 +1187,126 @@
         ],
         "title": "AuthConfig"
       },
+      "AvatarShape": {
+        "type": "string",
+        "enum": [
+          "circle",
+          "rounded",
+          "square"
+        ],
+        "title": "AvatarShape"
+      },
+      "BackgroundKind": {
+        "type": "string",
+        "enum": [
+          "default",
+          "solid",
+          "gradient",
+          "image",
+          "curated"
+        ],
+        "title": "BackgroundKind"
+      },
+      "BackgroundList": {
+        "properties": {
+          "backgrounds": {
+            "items": {
+              "$ref": "#/components/schemas/BackgroundRead"
+            },
+            "type": "array",
+            "title": "Backgrounds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "backgrounds"
+        ],
+        "title": "BackgroundList"
+      },
+      "BackgroundRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "image_url": {
+            "type": "string",
+            "title": "Image Url"
+          },
+          "dark": {
+            "type": "boolean",
+            "title": "Dark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "image_url",
+          "dark"
+        ],
+        "title": "BackgroundRead"
+      },
+      "BackgroundUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "dark": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dark"
+          }
+        },
+        "type": "object",
+        "title": "BackgroundUpdate"
+      },
+      "Body_create_background": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Name"
+          },
+          "dark": {
+            "type": "boolean",
+            "title": "Dark",
+            "default": true
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "file"
+        ],
+        "title": "Body_create_background"
+      },
       "Body_upload_my_avatar": {
         "properties": {
           "file": {
@@ -881,6 +1320,20 @@
           "file"
         ],
         "title": "Body_upload_my_avatar"
+      },
+      "Body_upload_my_background": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_my_background"
       },
       "BuildInfo": {
         "properties": {
@@ -924,6 +1377,25 @@
           "openapi_url"
         ],
         "title": "BuildInfo"
+      },
+      "ButtonShape": {
+        "type": "string",
+        "enum": [
+          "square",
+          "rounded",
+          "pill"
+        ],
+        "title": "ButtonShape"
+      },
+      "ButtonStyle": {
+        "type": "string",
+        "enum": [
+          "filled",
+          "outline",
+          "glass",
+          "shadow"
+        ],
+        "title": "ButtonStyle"
       },
       "DnsRecord": {
         "properties": {
@@ -1103,6 +1575,19 @@
           "created_at"
         ],
         "title": "DomainRead"
+      },
+      "Font": {
+        "type": "string",
+        "enum": [
+          "system",
+          "inter",
+          "nunito",
+          "lora",
+          "playfair",
+          "space-mono",
+          "caveat"
+        ],
+        "title": "Font"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1382,6 +1867,9 @@
             "type": "array",
             "maxItems": 20,
             "title": "Sections"
+          },
+          "theme": {
+            "$ref": "#/components/schemas/Theme"
           }
         },
         "type": "object",
@@ -1429,6 +1917,31 @@
             "type": "array",
             "title": "Sections"
           },
+          "theme": {
+            "$ref": "#/components/schemas/Theme"
+          },
+          "background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Background Url"
+          },
+          "custom_background_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Background Url"
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time",
@@ -1443,6 +1956,9 @@
           "avatar_url",
           "socials",
           "sections",
+          "theme",
+          "background_url",
+          "custom_background_url",
           "updated_at"
         ],
         "title": "PageRead",
@@ -1460,12 +1976,17 @@
             },
             "type": "array",
             "title": "Avatar Types"
+          },
+          "max_background_kb": {
+            "type": "integer",
+            "title": "Max Background Kb"
           }
         },
         "type": "object",
         "required": [
           "max_avatar_kb",
-          "avatar_types"
+          "avatar_types",
+          "max_background_kb"
         ],
         "title": "PublicConfig",
         "description": "Limits the SPA needs before it talks to the API (no auth)."
@@ -1580,6 +2101,131 @@
         ],
         "title": "SocialLinkRead"
       },
+      "Theme": {
+        "properties": {
+          "background": {
+            "$ref": "#/components/schemas/ThemeBackground"
+          },
+          "font": {
+            "$ref": "#/components/schemas/Font",
+            "default": "system"
+          },
+          "text_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Color"
+          },
+          "button_style": {
+            "$ref": "#/components/schemas/ButtonStyle",
+            "default": "filled"
+          },
+          "button_shape": {
+            "$ref": "#/components/schemas/ButtonShape",
+            "default": "rounded"
+          },
+          "button_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Button Color"
+          },
+          "button_text_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Button Text Color"
+          },
+          "avatar_shape": {
+            "$ref": "#/components/schemas/AvatarShape",
+            "default": "circle"
+          }
+        },
+        "type": "object",
+        "title": "Theme"
+      },
+      "ThemeBackground": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/BackgroundKind",
+            "default": "default"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "gradient_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient From"
+          },
+          "gradient_to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gradient To"
+          },
+          "gradient_angle": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Gradient Angle",
+            "default": 180
+          },
+          "curated_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curated Id"
+          },
+          "image_dark": {
+            "type": "boolean",
+            "title": "Image Dark",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "ThemeBackground"
+      },
       "Token": {
         "properties": {
           "access_token": {
@@ -1622,6 +2268,10 @@
             "type": "boolean",
             "title": "Is Active"
           },
+          "is_admin": {
+            "type": "boolean",
+            "title": "Is Admin"
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -1634,6 +2284,7 @@
           "email",
           "display_name",
           "is_active",
+          "is_admin",
           "created_at"
         ],
         "title": "UserRead"

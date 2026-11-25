@@ -277,6 +277,7 @@ def test_build_ingress():
     paths = {p["path"]: p["backend"]["service"]["name"] for p in rule_paths}
     assert paths == {
         "/api/pages": "navi-backend",
+        "/api/backgrounds": "navi-backend",
         "/api/domains/lookup": "navi-backend",
         "/": "navi-frontend",
     }

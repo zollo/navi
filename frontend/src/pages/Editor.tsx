@@ -7,8 +7,10 @@ import IconSelect from "../components/IconSelect";
 import LinktreeImport from "../components/LinktreeImport";
 import PageView from "../components/PageView";
 import RowActions from "../components/RowActions";
+import ThemeEditor from "../components/ThemeEditor";
 import { DEFAULT_MAX_AVATAR_KB, loadImage } from "../lib/avatar";
 import { guessIcon } from "../lib/icons";
+import { fitImage, imageIsDark } from "../lib/image";
 import {
   applyImport,
   blankPage,
@@ -19,7 +21,19 @@ import {
   normalizeHandle,
   toInput,
 } from "../lib/page";
-import type { HandleCheck, Link, Page, PageImport, PageInput, PublicConfig, Section, SocialLink } from "../types";
+import { withBackgroundKind } from "../lib/theme";
+import type {
+  Background,
+  HandleCheck,
+  Link,
+  Page,
+  PageImport,
+  PageInput,
+  PageTheme,
+  PublicConfig,
+  Section,
+  SocialLink,
+} from "../types";
 
 // Live availability check for a handle, debounced while typing.
 function useHandleCheck(handle: string, current: string | null) {
@@ -132,6 +146,10 @@ export default function Editor() {
   const [missing, setMissing] = useState(false);
   const [draft, setDraft] = useState<PageInput | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [customBg, setCustomBg] = useState<string | null>(null);
+  const [uploadingBg, setUploadingBg] = useState(false);
+  const [gallery, setGallery] = useState<Background[]>([]);
+  const [limits, setLimits] = useState<PublicConfig | null>(null);
   // An imported profile picture (data: URL), uploaded when the page is saved.
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
   const [imported, setImported] = useState(false);
@@ -149,7 +167,12 @@ export default function Editor() {
     setLoaded(p);
     setDraft(toInput(p));
     setAvatarUrl(p.avatar_url);
+    setCustomBg(p.custom_background_url);
     setMissing(false);
+  }, []);
+
+  useEffect(() => {
+    api.get<{ backgrounds: Background[] }>("/api/backgrounds").then((r) => setGallery(r.backgrounds)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -165,7 +188,10 @@ export default function Editor() {
   useEffect(() => {
     api
       .get<PublicConfig>("/api/config")
-      .then((c) => setMaxAvatarKb(c.max_avatar_kb))
+      .then((c) => {
+        setMaxAvatarKb(c.max_avatar_kb);
+        setLimits(c);
+      })
       .catch(() => {});
   }, []);
 
@@ -257,6 +283,43 @@ export default function Editor() {
       setEditing(null);
     } catch (err) {
       throw new Error(err instanceof ApiError ? err.message : "Couldn't upload the photo");
+    }
+  };
+
+  const setTheme = (theme: PageTheme) => update({ theme });
+
+  const uploadBackground = async (file: File) => {
+    setError(null);
+    setUploadingBg(true);
+    try {
+      const fitted = await fitImage(file, (limits?.max_background_kb ?? 2048) * 1024);
+      const dark = await imageIsDark(fitted);
+      const p = await api.upload<Page>("/api/pages/me/background", fitted);
+      setCustomBg(p.custom_background_url);
+      setDraft((d) =>
+        d && {
+          ...d,
+          theme: { ...d.theme, background: { ...d.theme.background, kind: "image", curated_id: null, image_dark: dark } },
+        },
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't upload the image");
+    } finally {
+      setUploadingBg(false);
+    }
+  };
+
+  const removeBackground = async () => {
+    setError(null);
+    try {
+      const p = await api.del<Page>("/api/pages/me/background");
+      setCustomBg(p.custom_background_url);
+      setDraft((d) => {
+        if (!d || d.theme.background.kind !== "image") return d;
+        return { ...d, theme: withBackgroundKind(d.theme, d.theme.background.color ? "solid" : "default") };
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't remove the image");
     }
   };
 
@@ -404,6 +467,16 @@ export default function Editor() {
             </div>
           </div>
 
+          <ThemeEditor
+            theme={draft.theme}
+            onChange={setTheme}
+            customBackgroundUrl={customBg}
+            onUploadBackground={(f) => void uploadBackground(f)}
+            onRemoveBackground={() => void removeBackground()}
+            uploading={uploadingBg}
+            gallery={gallery}
+          />
+
           <div className="card">
             <h2>Social icons</h2>
             <p className="muted small">The row of icons under your tagline.</p>
@@ -548,7 +621,12 @@ export default function Editor() {
 
         <aside className="editor-preview" aria-label="Preview">
           <div className="phone">
-            <PageView page={{ ...draft, handle: normalizeHandle(draft.handle) }} avatarUrl={shownAvatar} preview />
+            <PageView
+              page={{ ...draft, handle: normalizeHandle(draft.handle) }}
+              avatarUrl={shownAvatar}
+              customBackgroundUrl={customBg}
+              preview
+            />
           </div>
         </aside>
       </div>

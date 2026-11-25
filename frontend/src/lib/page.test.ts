@@ -61,6 +61,8 @@ describe("page helpers", () => {
     const input = toInput({
       ...blankPage("abc"),
       avatar_url: null,
+      background_url: null,
+      custom_background_url: null,
       updated_at: "",
       sections: [{ id: "s1", title: "A", links: [{ id: "l1", title: "T", url: "https://a.b/c", icon: "link" }] }],
     });

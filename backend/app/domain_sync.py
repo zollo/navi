@@ -8,7 +8,7 @@ One pass:
    domains that are gone or no longer verified.
 
 Each custom-domain Ingress only routes what a public page needs: the SPA, its
-assets, `/api/pages/*` and `/api/domains/lookup` (the rest of /api goes to the
+assets, `/api/pages/*`, `/api/backgrounds/*` and `/api/domains/lookup` (the rest of /api goes to the
 SPA's nginx and fails there). Sign-in and editing stay on Navi's own hostname.
 
 The Kubernetes part talks to the API server with the pod's service account
@@ -75,6 +75,12 @@ def build_ingress(cfg: SyncSettings, hostname: str) -> dict[str, Any]:
     name = ingress_name(cfg.instance, hostname)
     paths = [
         {"path": "/api/pages", "pathType": "Prefix", "backend": _backend(cfg.backend_service)},
+        # Curated background images (GET /api/backgrounds/{id}/image).
+        {
+            "path": "/api/backgrounds",
+            "pathType": "Prefix",
+            "backend": _backend(cfg.backend_service),
+        },
         {
             "path": "/api/domains/lookup",
             "pathType": "Exact",

@@ -324,18 +324,34 @@ input:focus, select:focus, textarea:focus {
 .help.bad { color: var(--danger); }
 
 /* ── Public page (also the editor preview) ─────────────────────────── */
+/* The page's theme (lib/theme.ts themeStyle) sets the --nv-* properties; each
+   falls back to the default look, which follows the viewer's light/dark mode. */
 .navi-shell {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--page-bg);
   padding: 0 0 48px;
+  color: var(--nv-text, var(--text));
+  font-family: var(--nv-font, inherit);
 }
+.navi-shell.preview { min-height: 640px; padding-bottom: 24px; }
+/* Caveat runs small and narrow: scale it up to read like the other fonts. */
+.font-caveat .navi-head h1 { font-size: 30px; }
+.font-caveat .navi-tagline, .font-caveat .navi-section h2, .font-caveat .navi-link > a { font-size: 21px; }
+.navi-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--nv-bg, var(--page-bg));
+}
+/* On the public page the background stays put while the links scroll. */
+.navi-shell:not(.preview) .navi-backdrop { position: fixed; }
 .navi-page {
   position: relative;
   max-width: 580px;
   margin: 0 auto;
   padding: 20px 20px 32px;
-  background: var(--page-bg);
 }
 @media (min-width: 640px) { .navi-shell { padding-top: 20px; } .navi-page { border-radius: 24px; } }
 .navi-top { display: flex; justify-content: space-between; align-items: center; }
@@ -379,11 +395,11 @@ input:focus, select:focus, textarea:focus {
   background: var(--hover);
   font-size: 13px;
 }
-.navi-head { text-align: center; margin: 12px 0 28px; }
+.navi-head { text-align: center; margin: 12px 0 28px; text-shadow: var(--nv-text-shadow, none); }
 .navi-avatar {
   width: 96px;
   height: 96px;
-  border-radius: 50%;
+  border-radius: var(--nv-avatar-radius, 50%);
   object-fit: cover;
   display: block;
   margin: 0 auto 14px;
@@ -414,31 +430,42 @@ input:focus, select:focus, textarea:focus {
   height: 44px;
   align-items: center;
   justify-content: center;
-  color: var(--text);
+  color: inherit;
   border-radius: 12px;
 }
-.navi-socials a:hover { background: var(--card-hover); }
+.navi-socials a:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
 .navi-section + .navi-section { margin-top: 24px; }
-.navi-section h2 { text-align: center; font-size: 16px; font-weight: 700; margin: 0 0 12px; }
+.navi-section h2 {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  text-shadow: var(--nv-text-shadow, none);
+}
 .navi-section ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .navi-link {
   position: relative;
-  background: var(--card-bg);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  transition: transform 0.12s ease, background 0.12s ease;
+  background: var(--nv-btn-bg, var(--card-bg));
+  border: var(--nv-btn-border, none);
+  border-radius: var(--nv-btn-radius, 14px);
+  box-shadow: var(--nv-btn-shadow, var(--shadow));
+  -webkit-backdrop-filter: var(--nv-btn-blur, none);
+  backdrop-filter: var(--nv-btn-blur, none);
+  transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
 /* Lift the card whose menu is open above the cards after it. */
 .navi-link:has(.menu), .navi-link:focus-within { z-index: 5; }
-.navi-link:hover { background: var(--card-hover); transform: scale(1.01); }
+.navi-link:hover { background: var(--nv-btn-hover, var(--card-hover)); transform: scale(1.01); }
+.btn-shadow .navi-link:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--nv-btn-edge); }
 .navi-link > a {
   display: flex;
   align-items: center;
   min-height: 64px;
   padding: 8px 56px;
-  color: var(--text);
+  color: var(--nv-btn-fg, var(--text));
   font-weight: 500;
 }
+.navi-link .link-menu > .icon-btn { color: var(--nv-btn-fg, var(--muted)); }
 .navi-link > a:hover { text-decoration: none; }
 .navi-link .ico {
   position: absolute;
@@ -612,6 +639,138 @@ input:focus, select:focus, textarea:focus {
 }
 .landing { text-align: center; max-width: 420px; }
 .landing h1 { font-size: 40px; margin-top: 12px; }
+
+/* ── Appearance (theme editor) ─────────────────────────────────────── */
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-head h2 { margin: 0; }
+.theme-editor h3 { margin: 20px 0 10px; font-size: 15px; }
+.theme-sub { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.theme-sub .field, .theme-editor .grid .field { margin-bottom: 0; }
+.theme-editor .grid { margin-bottom: 12px; }
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--hover);
+}
+.segmented button {
+  flex: 1 1 auto;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.segmented button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+.color-field .row { flex-wrap: nowrap; }
+.color-field input[type="color"] {
+  width: 44px;
+  height: 44px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  cursor: pointer;
+  flex: none;
+}
+.color-field input.hex { width: 110px; font-family: ui-monospace, monospace; }
+.color-field .check { margin: 0; white-space: nowrap; }
+.swatches, .gradient-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+}
+.swatch.wide { width: 56px; border-radius: 10px; }
+.swatch:hover { transform: scale(1.08); }
+input[type="range"] { width: 100%; accent-color: var(--primary); }
+.preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 10px;
+}
+.preset {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: none;
+  cursor: pointer;
+  overflow: hidden;
+  font-family: var(--nv-font, inherit);
+  color: var(--nv-text, var(--text));
+}
+.preset:hover { border-color: var(--primary); }
+.preset-bg { position: absolute; inset: 0; z-index: -1; background: var(--nv-bg, var(--page-bg)); }
+.preset-btn {
+  width: 100%;
+  height: 14px;
+  background: var(--nv-btn-bg, var(--card-bg));
+  border: var(--nv-btn-border, none);
+  border-radius: var(--nv-btn-radius, 14px);
+  box-shadow: var(--nv-btn-shadow, var(--shadow));
+}
+.preset-name { font-size: 13px; font-weight: 700; margin-top: 2px; }
+.bg-upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.bg-thumb { width: 72px; height: 96px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+.gallery-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.gallery-item img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; display: block; }
+.gallery-item.on { border-color: var(--primary); }
+.gallery-item .tick {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 20px;
+}
+
+/* ── Admin: backgrounds ────────────────────────────────────────────── */
+.admin-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.admin-gallery .card + .card { margin-top: 0; }
+.admin-bg { display: flex; flex-direction: column; gap: 10px; padding: 10px; }
+.admin-bg img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 8px; display: block; }
+.admin-bg .spacer { flex: 1; }
+input[type="file"] { max-width: 100%; font-size: 15px; }
 
 /* Linktree import */
 .import-toggle { margin-bottom: 12px; }

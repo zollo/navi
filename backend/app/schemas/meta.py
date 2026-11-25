@@ -23,3 +23,5 @@ class PublicConfig(BaseModel):
 
     max_avatar_kb: int
     avatar_types: list[str]
+    # Largest page or gallery background image the API accepts.
+    max_background_kb: int

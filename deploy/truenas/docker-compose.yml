@@ -55,8 +55,10 @@ services:
       NAVI_PUBLIC_URL: ${NAVI_PUBLIC_URL:-http://localhost:30083}
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
       LINKTREE_IMPORT_ENABLED: ${LINKTREE_IMPORT_ENABLED:-true}
       MAX_AVATAR_KB: ${MAX_AVATAR_KB:-1024}
+      MAX_BACKGROUND_KB: ${MAX_BACKGROUND_KB:-2048}
     depends_on:
       postgres:
         condition: service_healthy

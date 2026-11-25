@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
 from app.config import settings
+from app.core.images import IMAGE_TYPES
 from app.db import get_db
 from app.models.user import User
 from app.schemas.meta import BuildInfo, PublicConfig
-from app.services.page_service import AVATAR_TYPES
 
 router = APIRouter(tags=["health"])
 
@@ -51,4 +51,8 @@ async def build_info(_: User = Depends(get_current_user)) -> BuildInfo:
 @router.get("/config", response_model=PublicConfig, tags=["meta"], operation_id="public_config")
 async def public_config() -> PublicConfig:
     """Upload limits for clients, such as the largest avatar the API accepts. Public."""
-    return PublicConfig(max_avatar_kb=settings.max_avatar_kb, avatar_types=sorted(AVATAR_TYPES))
+    return PublicConfig(
+        max_avatar_kb=settings.max_avatar_kb,
+        avatar_types=sorted(IMAGE_TYPES),
+        max_background_kb=settings.max_background_kb,
+    )

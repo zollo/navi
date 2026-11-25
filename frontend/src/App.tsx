@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Account from "./pages/Account";
+import AdminBackgrounds from "./pages/AdminBackgrounds";
 import Editor from "./pages/Editor";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -42,6 +43,7 @@ export default function App() {
       >
         <Route path="/edit" element={<Editor />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/admin" element={<AdminBackgrounds />} />
       </Route>
 
       <Route path="/:handle" element={<PublicPage />} />

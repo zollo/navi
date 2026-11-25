@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Let anyone create an account (and so a page) from the sign-up page.
     allow_registration: bool = Field(default=True, alias="ALLOW_REGISTRATION")
 
+    # Let signed-in users import a page from Linktree (the API fetches linktr.ee).
+    linktree_import_enabled: bool = Field(default=True, alias="LINKTREE_IMPORT_ENABLED")
+
     # Uploads (avatars)
     max_avatar_kb: int = Field(default=1024, alias="MAX_AVATAR_KB")
 

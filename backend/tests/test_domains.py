@@ -5,7 +5,7 @@ import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 
-import httpx
+import httpx2
 import pytest
 
 from app import domain_sync
@@ -288,23 +288,23 @@ def test_reconcile_creates_updates_and_deletes():
     store[stale["metadata"]["name"]] = stale
     calls: list[tuple[str, str]] = []
 
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         name = request.url.path.rsplit("/", 1)[-1]
         calls.append((request.method, name))
         if request.method == "GET":
             assert "managed-by=navi-domain-sync" in request.url.params["labelSelector"]
-            return httpx.Response(200, json={"items": list(store.values())})
+            return httpx2.Response(200, json={"items": list(store.values())})
         if request.method == "PATCH":
             assert request.headers["content-type"] == "application/apply-patch+yaml"
             store[name] = json.loads(request.content)
-            return httpx.Response(200, json=store[name])
+            return httpx2.Response(200, json=store[name])
         if request.method == "DELETE":
             store.pop(name, None)
-            return httpx.Response(200, json={})
-        return httpx.Response(405)
+            return httpx2.Response(200, json={})
+        return httpx2.Response(405)
 
     async def run(hosts: list[str]) -> dict:
-        client = httpx.AsyncClient(transport=httpx.MockTransport(handler), base_url="https://k8s")
+        client = httpx2.AsyncClient(transport=httpx2.MockTransport(handler), base_url="https://k8s")
         async with client:
             kube = domain_sync.KubeIngresses(client, "navi-prod")
             return await domain_sync.reconcile(kube, CFG, hosts)

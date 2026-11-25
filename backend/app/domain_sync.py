@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import httpx
+import httpx2
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -113,7 +113,7 @@ def build_ingress(cfg: SyncSettings, hostname: str) -> dict[str, Any]:
 class KubeIngresses:
     """The few Ingress calls the sync needs, against the in-cluster API server."""
 
-    def __init__(self, client: httpx.AsyncClient, namespace: str):
+    def __init__(self, client: httpx2.AsyncClient, namespace: str):
         self.client = client
         self.base = f"/apis/networking.k8s.io/v1/namespaces/{namespace}/ingresses"
 
@@ -124,7 +124,7 @@ class KubeIngresses:
         if ":" in host:
             host = f"[{host}]"
         token = (SA_DIR / "token").read_text().strip()
-        client = httpx.AsyncClient(
+        client = httpx2.AsyncClient(
             base_url=f"https://{host}:{port}",
             headers={"Authorization": f"Bearer {token}"},
             verify=str(SA_DIR / "ca.crt"),
@@ -200,7 +200,7 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     try:
         asyncio.run(run_once())
-    except httpx.HTTPStatusError as exc:
+    except httpx2.HTTPStatusError as exc:
         log.error("Kubernetes API: %s %s", exc.response.status_code, exc.response.text[:500])
         return 1
     return 0

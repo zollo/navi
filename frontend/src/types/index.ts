@@ -100,6 +100,24 @@ export interface HandleCheck {
   reason: string | null;
 }
 
+// What POST /api/import/linktree returns: a draft, nothing saved yet.
+export interface PageImport {
+  source_url: string;
+  title: string;
+  tagline: string;
+  socials: SocialLink[];
+  sections: Section[];
+  // The profile picture as a data: URL, to upload with PUT /api/pages/me/avatar.
+  avatar_data_url: string | null;
+  warnings: string[];
+}
+
+// What GET /api/config returns.
+export interface PublicConfig {
+  max_avatar_kb: number;
+  avatar_types: string[];
+}
+
 // Custom domains (/api/domains).
 export interface DomainConfig {
   enabled: boolean;

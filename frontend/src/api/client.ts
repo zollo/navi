@@ -96,6 +96,12 @@ async function upload<T>(path: string, file: File): Promise<T> {
 }
 
 
+// An image URL from the API ("/api/...") made absolute for the configured origin.
+// data: URLs (e.g. an imported avatar not uploaded yet) pass through.
+function assetUrl(url: string): string {
+  return url.startsWith("data:") ? url : BASE_URL + url;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
@@ -104,4 +110,5 @@ export const api = {
   del: <T>(path: string) => request<T>("DELETE", path),
   upload,
   baseUrl: BASE_URL,
+  assetUrl,
 };

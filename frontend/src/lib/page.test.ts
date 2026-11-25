@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { guessIcon } from "./icons";
-import { blankPage, handleProblem, isSafeUrl, move, normalizeHandle, toInput } from "./page";
+import {
+  applyImport,
+  blankPage,
+  dataUrlToFile,
+  handleProblem,
+  isSafeUrl,
+  move,
+  normalizeHandle,
+  toInput,
+} from "./page";
 
 describe("handles", () => {
   it("normalizes", () => {
@@ -59,5 +68,34 @@ describe("page helpers", () => {
       title: "A",
       links: [{ title: "T", url: "https://a.b/c", icon: "link" }],
     });
+  });
+});
+
+describe("import", () => {
+  it("keeps the handle and replaces the rest", () => {
+    const draft = { ...blankPage("me"), title: "Old" };
+    const next = applyImport(draft, {
+      source_url: "https://linktr.ee/x",
+      title: "New",
+      tagline: "Hi",
+      socials: [{ icon: "github", url: "https://github.com/x" }],
+      sections: [],
+      avatar_data_url: null,
+      warnings: [],
+    });
+    expect(next.handle).toBe("me");
+    expect(next.title).toBe("New");
+    expect(next.socials).toHaveLength(1);
+    expect(next.sections).toEqual([{ title: "Links", links: [] }]);
+  });
+
+  it("turns a data URL into a file", async () => {
+    const file = dataUrlToFile("data:image/png;base64,iVBORw0=");
+    expect(file.type).toBe("image/png");
+    expect(file.name).toBe("avatar.png");
+    expect(new Uint8Array(await file.arrayBuffer()).slice(0, 4)).toEqual(
+      new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+    );
+    expect(() => dataUrlToFile("https://x")).toThrow();
   });
 });

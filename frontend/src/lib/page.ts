@@ -1,4 +1,5 @@
 import type { Page, PageImport, PageInput } from "../types";
+import { DEFAULT_THEME, normalizeTheme } from "./theme";
 
 // Mirrors backend/app/services/page_service.py HANDLE_RE / RESERVED_HANDLES.
 const HANDLE_RE = /^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/;
@@ -41,6 +42,7 @@ export function toInput(page: Page): PageInput {
       title: s.title,
       links: s.links.map(({ title, url, icon }) => ({ title, url, icon })),
     })),
+    theme: normalizeTheme(page.theme),
   };
 }
 
@@ -51,6 +53,7 @@ export function blankPage(handle = ""): PageInput {
     tagline: "",
     socials: [],
     sections: [{ title: "Links", links: [] }],
+    theme: DEFAULT_THEME,
   };
 }
 
@@ -110,6 +113,8 @@ export function applyImport(draft: PageInput, imported: PageImport): PageInput {
     tagline: imported.tagline,
     socials: imported.socials,
     sections: imported.sections.length ? imported.sections : [{ title: "Links", links: [] }],
+    // An import replaces the content, not the look.
+    theme: draft.theme,
   };
 }
 

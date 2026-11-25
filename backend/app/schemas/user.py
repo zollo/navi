@@ -14,6 +14,7 @@ class UserRead(BaseModel):
     email: EmailStr
     display_name: str
     is_active: bool
+    is_admin: bool
     created_at: datetime
 
 

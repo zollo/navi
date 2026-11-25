@@ -40,3 +40,9 @@ async def get_optional_user(
     if creds is None or not creds.credentials:
         return None
     return await user_service.resolve_token(db, creds.credentials)
+
+
+async def get_admin_user(user: User = Depends(get_current_user)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admins only")
+    return user

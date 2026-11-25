@@ -46,12 +46,16 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", alias="JWT_ALGORITHM")
     # Let anyone create an account (and so a page) from the sign-up page.
     allow_registration: bool = Field(default=True, alias="ALLOW_REGISTRATION")
+    # Comma-separated emails that become admins when they sign in (admins manage
+    # the curated background gallery).
+    admin_emails: str = Field(default="", alias="ADMIN_EMAILS")
 
     # Let signed-in users import a page from Linktree (the API fetches linktr.ee).
     linktree_import_enabled: bool = Field(default=True, alias="LINKTREE_IMPORT_ENABLED")
 
-    # Uploads (avatars)
+    # Uploads (avatars, background images)
     max_avatar_kb: int = Field(default=1024, alias="MAX_AVATAR_KB")
+    max_background_kb: int = Field(default=2048, alias="MAX_BACKGROUND_KB")
 
     @model_validator(mode="after")
     def _require_real_secret(self) -> Settings:
@@ -88,6 +92,14 @@ class Settings(BaseSettings):
     @property
     def max_avatar_bytes(self) -> int:
         return self.max_avatar_kb * 1024
+
+    @property
+    def max_background_bytes(self) -> int:
+        return self.max_background_kb * 1024
+
+    @property
+    def admin_email_set(self) -> frozenset[str]:
+        return frozenset(e.strip().lower() for e in self.admin_emails.split(",") if e.strip())
 
 
 @lru_cache

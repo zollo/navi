@@ -13,6 +13,7 @@ from typing import Annotated
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
 
 from app.models.page import Icon
+from app.schemas.theme import Theme
 
 MAX_SECTIONS = 20
 MAX_LINKS_PER_SECTION = 50
@@ -76,6 +77,8 @@ class PageIn(BaseModel):
     tagline: str = Field(default="", max_length=300)
     socials: list[SocialLinkIn] = Field(default_factory=list, max_length=MAX_SOCIALS)
     sections: list[SectionIn] = Field(default_factory=list, max_length=MAX_SECTIONS)
+    # Leave out for the default look.
+    theme: Theme = Field(default_factory=Theme)
 
 
 class PageRead(BaseModel):
@@ -90,6 +93,13 @@ class PageRead(BaseModel):
     avatar_url: str | None
     socials: list[SocialLinkRead]
     sections: list[SectionRead]
+    theme: Theme
+    # Relative URL of the background image (the page's own, or the curated one it
+    # uses), or null when the background isn't an image.
+    background_url: str | None
+    # The page's own uploaded background image, shown when the background kind is
+    # "image"; null when none was uploaded.
+    custom_background_url: str | None
     updated_at: datetime
 
 

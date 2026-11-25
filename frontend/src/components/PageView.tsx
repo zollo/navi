@@ -4,6 +4,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { api } from "../api/client";
 import { ICONS, NaviIcon } from "../lib/icons";
 import { canShare, copyText, pageUrl } from "../lib/page";
+import { backgroundImageUrl, themeStyle } from "../lib/theme";
 import type { PageInput } from "../types";
 import LinkMenu from "./LinkMenu";
 import Logo from "./Logo";
@@ -11,6 +12,8 @@ import Logo from "./Logo";
 interface Props {
   page: PageInput;
   avatarUrl: string | null;
+  // The page's own uploaded background image (shown for an "image" background).
+  customBackgroundUrl?: string | null;
   // In the editor's preview, links don't navigate and the chrome is static.
   preview?: boolean;
 }
@@ -22,7 +25,7 @@ function initials(page: PageInput): string {
 
 // A Navi page: logo and share button, avatar, handle, tagline, social icons and
 // sectioned link cards. Used by the public page and the editor preview.
-export default function PageView({ page, avatarUrl, preview = false }: Props) {
+export default function PageView({ page, avatarUrl, customBackgroundUrl = null, preview = false }: Props) {
   // After a copy attempt: "copied", or the URL to select by hand if copying failed.
   const [toast, setToast] = useState<string | null>(null);
   const url = pageUrl(page.handle);
@@ -45,7 +48,13 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
     setTimeout(() => setToast(null), copied ? 1500 : 6000);
   };
 
+  const image = backgroundImageUrl(page.theme.background, customBackgroundUrl);
+  const style = themeStyle(page.theme, image ? api.baseUrl + image : null);
+  const Shell = preview ? "div" : "main";
+
   return (
+    <Shell className={`navi-shell btn-${page.theme.button_style} font-${page.theme.font} ${preview ? "preview" : ""}`} style={style}>
+    <div className="navi-backdrop" aria-hidden />
     <div className="navi-page">
       <div className="navi-top">
         <RouterLink
@@ -117,5 +126,6 @@ export default function PageView({ page, avatarUrl, preview = false }: Props) {
         ),
       )}
     </div>
+    </Shell>
   );
 }

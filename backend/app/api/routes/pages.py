@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_optional_user
 from app.config import settings
 from app.core.errors import TooLarge
+from app.core.images import image_headers
 from app.db import get_db
 from app.models.page import Icon
 from app.models.user import User
@@ -79,6 +80,30 @@ async def delete_my_avatar(
     return await page_service.clear_avatar(db, user)
 
 
+@router.put("/me/background", response_model=PageRead, operation_id="upload_my_background")
+async def upload_my_background(
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PageRead:
+    """Upload a PNG, JPEG, WebP or GIF background image (multipart `file`).
+
+    It shows once the page is saved with `theme.background.kind` = `image`.
+    """
+    data = await file.read(settings.max_background_bytes + 1)
+    if len(data) > settings.max_background_bytes:
+        raise TooLarge(f"Background image must be at most {settings.max_background_kb} KB")
+    return await page_service.set_background(db, user, data, file.content_type)
+
+
+@router.delete("/me/background", response_model=PageRead, operation_id="delete_my_background")
+async def delete_my_background(
+    user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+) -> PageRead:
+    """Remove your background image. A page showing it falls back to its color."""
+    return await page_service.clear_background(db, user)
+
+
 @router.get("/icons", response_model=IconList, operation_id="list_icons")
 async def list_icons() -> IconList:
     """Icon names accepted for social icons and links."""
@@ -124,3 +149,15 @@ async def get_avatar(handle: str, db: AsyncSession = Depends(get_db)) -> Respons
             "X-Content-Type-Options": "nosniff",
         },
     )
+
+
+@router.get(
+    "/{handle}/background",
+    operation_id="get_page_background",
+    response_class=Response,
+    responses={200: {"content": {"image/*": {}}}},
+)
+async def get_page_background(handle: str, db: AsyncSession = Depends(get_db)) -> Response:
+    """A page's own background image. URLs carry `?v=` so they can be cached."""
+    data, content_type = await page_service.get_background(db, handle)
+    return Response(content=data, media_type=content_type, headers=image_headers())

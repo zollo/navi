@@ -50,8 +50,6 @@ export default function PublicPage() {
   if (!page) return <div className="center-screen muted">Loading…</div>;
 
   return (
-    <main className="navi-shell">
-      <PageView page={toInput(page)} avatarUrl={page.avatar_url} />
-    </main>
+    <PageView page={toInput(page)} avatarUrl={page.avatar_url} customBackgroundUrl={page.custom_background_url} />
   );
 }

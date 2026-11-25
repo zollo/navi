@@ -292,6 +292,9 @@ function panelColor(content: ContentBackground): string | null {
   return null;
 }
 
+// The default page background (--page-bg in index.css) in light and dark mode.
+const PAGE_BG = { light: "#eceef2", dark: "#0e0f14" };
+
 // `top` laid over `base` at `opacity` (0-1).
 function blend(base: string, top: string, opacity: number): string {
   const [b, t] = [rgb(base), rgb(top)];
@@ -311,8 +314,11 @@ function contentIsDark(content: ContentBackground, bg: ThemeBackground, hasImage
   else if (bg.kind === "solid" && bg.color) base = bg.color;
   else if (bg.kind === "gradient" && bg.gradient_from && bg.gradient_to) base = mix(bg.gradient_from, bg.gradient_to);
   if (base) return isDark(blend(base, panel, opacity));
-  // The default background follows light/dark mode: only a mostly opaque panel decides.
-  return opacity >= 0.5 ? isDark(panel) : null;
+  // The default background follows light/dark mode: blend over both. If they
+  // disagree, the app's own text color (which follows the mode too) is right.
+  const onLight = isDark(blend(PAGE_BG.light, panel, opacity));
+  const onDark = isDark(blend(PAGE_BG.dark, panel, opacity));
+  return onLight === onDark ? onLight : null;
 }
 
 // Whether the theme puts a panel behind the content (PageView adds a class).

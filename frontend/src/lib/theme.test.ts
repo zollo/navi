@@ -135,6 +135,19 @@ describe("content background", () => {
     expect(vars(themeStyle({ ...page, content_background: { ...white, opacity: 20 } }, null))["--nv-text"]).toBe("#ffffff");
   });
 
+  it("follows light/dark mode for a translucent panel on the default background", () => {
+    const panel = (color: string, opacity: number) => ({
+      ...DEFAULT_THEME,
+      content_background: { ...DEFAULT_CONTENT_BACKGROUND, kind: "solid" as const, color, opacity },
+    });
+    // 50% gray: light over the light page, dark over the dark page. Leave the
+    // text to the app, whose color follows the mode the same way.
+    expect(vars(themeStyle(panel("#808080", 50), null))["--nv-text"]).toBeUndefined();
+    // Opaque enough to read the same in both modes.
+    expect(vars(themeStyle(panel("#111318", 90), null))["--nv-text"]).toBe("#ffffff");
+    expect(vars(themeStyle(panel("#ffffff", 90), null))["--nv-text"]).toBe("#111318");
+  });
+
   it("fills in themes saved before it existed", () => {
     const old = normalizeTheme({ font: "lora" } as Partial<typeof DEFAULT_THEME>);
     expect(old.content_background).toEqual(DEFAULT_CONTENT_BACKGROUND);

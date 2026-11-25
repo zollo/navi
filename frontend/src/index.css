@@ -849,3 +849,45 @@ input[type="file"] { max-width: 100%; font-size: 15px; }
 .dns-field { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 6px; }
 .dns-field code { overflow-wrap: anywhere; font-size: 13px; }
 details summary { cursor: pointer; }
+
+/* ── AI tools (API keys + MCP setup) ───────────────────────────────── */
+.row.nowrap { flex-wrap: nowrap; }
+.row.nowrap input { flex: 1; min-width: 0; }
+.key-field { margin: 8px 0 12px; }
+.key-field code { user-select: all; }
+.key-list { margin-top: 14px; border-top: 1px solid var(--border); }
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.key-meta { flex: 1; min-width: 0; }
+.key-meta .name { font-weight: 600; overflow-wrap: anywhere; }
+.setup-body { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.setup-body > * { max-width: 100%; }
+.setup-body .alert { margin: 0; align-self: stretch; }
+.setup-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.setup-body .btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+.code-block {
+  align-self: stretch;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.code-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 12px;
+  background: var(--hover);
+}
+.code-block pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.code-block code { white-space: pre-wrap; overflow-wrap: anywhere; }

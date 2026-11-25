@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { LuImages, LuPencil, LuUser } from "react-icons/lu";
+import { LuBot, LuImages, LuPencil, LuUser } from "react-icons/lu";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Logo from "./Logo";
@@ -8,6 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 const TABS: { to: string; label: string; icon: ReactNode; admin?: boolean }[] = [
   { to: "/edit", label: "My page", icon: <LuPencil aria-hidden /> },
   { to: "/admin", label: "Backgrounds", icon: <LuImages aria-hidden />, admin: true },
+  { to: "/integrations", label: "AI tools", icon: <LuBot aria-hidden /> },
   { to: "/account", label: "Account", icon: <LuUser aria-hidden /> },
 ];
 

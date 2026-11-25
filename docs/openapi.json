@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Navi",
-    "description": "Navi gives everyone one simple page for their important links, public at\n`/<handle>`.\n\n* Read any page anonymously with `GET /api/pages/{handle}`.\n* Sign up or sign in with `POST /api/auth/register` / `POST /api/auth/login`, then send\n  `Authorization: Bearer <token>` to create and edit your own page at `/api/pages/me`.\n",
+    "description": "Navi gives everyone one simple page for their important links, public at\n`/<handle>`.\n\n* Read any page anonymously with `GET /api/pages/{handle}`.\n* Sign up or sign in with `POST /api/auth/register` / `POST /api/auth/login`, then send\n  `Authorization: Bearer <token>` to create and edit your own page at `/api/pages/me`.\n* For scripts and AI tools, create a personal API key (`navi_\u2026`) in the app under\n  Account \u2192 AI tools and send it the same way.\n* The same operations are **MCP tools** over streamable HTTP at `/mcp`, generated from\n  this schema: each tool is named after the `operationId` of its REST counterpart.\n",
     "version": "dev"
   },
   "paths": {
@@ -220,7 +220,7 @@
           "auth"
         ],
         "summary": "Update Me",
-        "description": "Change your display name or password.",
+        "description": "Change your display name or password. Needs a password sign-in, not an API key.",
         "operationId": "update_me",
         "requestBody": {
           "content": {
@@ -1170,10 +1170,238 @@
           }
         ]
       }
+    },
+    "/api/api-keys": {
+      "get": {
+        "tags": [
+          "api-keys"
+        ],
+        "summary": "List Api Keys",
+        "description": "Your API keys, newest first (names and prefixes; never the keys themselves).",
+        "operationId": "list_api_keys",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Api Keys"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "api-keys"
+        ],
+        "summary": "Create Api Key",
+        "description": "Create a key. The full key is returned once; only its hash is stored.",
+        "operationId": "create_api_key",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/api-keys/{key_id}": {
+      "delete": {
+        "tags": [
+          "api-keys"
+        ],
+        "summary": "Revoke Api Key",
+        "description": "Revoke a key. Anything using it stops working at once.",
+        "operationId": "revoke_api_key",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApiKeyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "description": "A label, e.g. 'Claude'."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ApiKeyCreate"
+      },
+      "ApiKeyCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "The key's first characters, to tell keys apart."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "The full key. Shown only once; store it securely."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at",
+          "key"
+        ],
+        "title": "ApiKeyCreated"
+      },
+      "ApiKeyRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "The key's first characters, to tell keys apart."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "last_used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Used At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "prefix",
+          "created_at",
+          "last_used_at"
+        ],
+        "title": "ApiKeyRead"
+      },
       "AuthConfig": {
         "properties": {
           "registration_enabled": {
@@ -2504,7 +2732,7 @@
     "securitySchemes": {
       "HTTPBearer": {
         "type": "http",
-        "description": "A session token from POST /api/auth/login.",
+        "description": "A session token from POST /api/auth/login, or a personal API key (navi_\u2026).",
         "scheme": "bearer"
       }
     }

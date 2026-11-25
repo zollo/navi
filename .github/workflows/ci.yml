@@ -37,9 +37,9 @@ jobs:
         run: ruff check .
       - name: Test (pytest, SQLite)
         run: pytest -q
-      - name: Check docs/openapi.json is current
+      - name: Check docs/openapi.json and docs/mcp-tools.json are current
         run: |
-          python -m app.openapi_export ../docs/openapi.json
+          python -m app.openapi_export ../docs/openapi.json --mcp-tools ../docs/mcp-tools.json
           git diff --exit-code -- ../docs || {
             echo "::error::API docs are stale. Run 'make openapi' and commit docs/."; exit 1; }
 
@@ -123,7 +123,7 @@ jobs:
           curl -fsS http://localhost:8000/api/health/ready | tee /tmp/ready.json; echo
           jq -e '.status == "ok"' /tmp/health.json
           jq -e '.database == true' /tmp/ready.json
-      - name: Check the frontend proxy, API docs and SPA page routing
+      - name: Check the frontend proxy, API docs, MCP auth and SPA page routing
         run: |
           for i in $(seq 1 20); do
             curl -fsS http://localhost:8080/ >/dev/null 2>&1 && break; sleep 2
@@ -137,6 +137,11 @@ jobs:
           curl -fsS http://localhost:8080/docs | grep -qi 'swagger'
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/pages/nobody)
           test "$code" = "404"
+          # MCP is proxied to the backend and refuses anonymous callers.
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8080/mcp \
+            -H 'Content-Type: application/json' -d '{}')
+          test "$code" = "401"
+          curl -fsS http://localhost:8080/mcpfan | grep -q '<div id="root">'
       - name: Dump logs on failure
         if: failure()
         run: docker compose -f docker-compose.yml logs
@@ -234,7 +239,7 @@ jobs:
           name: ${{ steps.final.outputs.tag }}
           generate_release_notes: true
 
-  # Publish the API contract (OpenAPI spec) with each
+  # Publish the API contract (OpenAPI spec + MCP tool definitions) with each
   # release so integrators can pin to a version.
   api-spec:
     name: Publish API spec
@@ -258,7 +263,8 @@ jobs:
         run: |
           pip install ".[dev]"
           NAVI_VERSION="$VERSION" python -m app.openapi_export \
-            "../dist/navi-openapi-${VERSION}.json" --version "$VERSION"
+            "../dist/navi-openapi-${VERSION}.json" --version "$VERSION" \
+            --mcp-tools "../dist/navi-mcp-tools-${VERSION}.json"
       - name: Attach to GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

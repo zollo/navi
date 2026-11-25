@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Account from "./pages/Account";
 import AdminBackgrounds from "./pages/AdminBackgrounds";
 import Editor from "./pages/Editor";
+import Integrations from "./pages/Integrations";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import PublicPage from "./pages/PublicPage";
@@ -43,6 +44,7 @@ export default function App() {
       >
         <Route path="/edit" element={<Editor />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/integrations" element={<Integrations />} />
         <Route path="/admin" element={<AdminBackgrounds />} />
       </Route>
 

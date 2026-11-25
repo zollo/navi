@@ -217,3 +217,13 @@ export interface DomainLookup {
   handle: string;
   primary_url: string;
 }
+
+// Personal API key (REST API and MCP). `key` is present only right after creation.
+export interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  created_at: string;
+  last_used_at: string | null;
+  key?: string;
+}

@@ -1,6 +1,8 @@
 """Password hashing and session JWT helpers."""
 from __future__ import annotations
 
+import hashlib
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -9,6 +11,10 @@ import bcrypt
 import jwt
 
 from app.config import settings
+
+# Personal API keys (REST and MCP) start with this, so they're easy to spot and
+# can't be confused with a session JWT.
+API_KEY_PREFIX = "navi_"
 
 
 def hash_password(password: str) -> str:
@@ -39,3 +45,16 @@ def create_access_token(subject: str | uuid.UUID, extra: dict[str, Any] | None =
 
 def decode_access_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
+
+
+def generate_api_key() -> str:
+    return API_KEY_PREFIX + secrets.token_urlsafe(32)
+
+
+def hash_api_key(key: str) -> str:
+    """SHA-256 of the key: keys are long and random, so a slow hash adds nothing."""
+    return hashlib.sha256(key.encode()).hexdigest()
+
+
+def is_api_key(token: str) -> bool:
+    return token.startswith(API_KEY_PREFIX)
